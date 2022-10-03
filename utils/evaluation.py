@@ -44,11 +44,13 @@ def evaluate(args,
                          ret_rms=ret_rms,
                          tasks=tasks,
                          add_done_info=args.max_rollouts_per_task > 1,
+                         eval_mode=True,
                          )
     num_steps = envs._max_episode_steps
 
     # reset environments
     state, belief, task = utl.reset_env(envs, args)
+    tasks = envs.get_task()
 
     # this counts how often an agent has done the same task already
     task_count = torch.zeros(num_processes).long().to(device)
@@ -99,7 +101,7 @@ def evaluate(args,
 
     envs.close()
 
-    return returns_per_episode[:, :num_episodes]
+    return returns_per_episode[:, :num_episodes], tasks
 
 
 def visualise_behaviour(args,

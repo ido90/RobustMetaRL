@@ -274,12 +274,12 @@ class Learner:
 
             ret_rms = self.envs.venv.ret_rms if self.args.norm_rew_for_policy else None
 
-            returns_per_episode = utl_eval.evaluate(args=self.args,
-                                                    policy=self.policy,
-                                                    ret_rms=ret_rms,
-                                                    iter_idx=self.iter_idx,
-                                                    tasks=self.train_tasks,
-                                                    )
+            returns_per_episode, _ = utl_eval.evaluate(args=self.args,
+                                                       policy=self.policy,
+                                                       ret_rms=ret_rms,
+                                                       iter_idx=self.iter_idx,
+                                                       tasks=self.train_tasks,
+                                                       )
 
             # log the average return across tasks (=processes)
             returns_avg = returns_per_episode.mean(dim=0)

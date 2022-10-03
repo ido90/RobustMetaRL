@@ -12,6 +12,9 @@ def get_args(rest_args):
     parser.add_argument('--exp_label', default='varibad', help='label (typically name of method)')
     parser.add_argument('--env_name', default='HalfCheetahVel-v0', help='environment to train on')
 
+    parser.add_argument('--alpha', type=float, default=0.05, help='CVaR risk level')
+    parser.add_argument('--cem', type=bool, default=False, help='use CEM sampler')
+
     # --- POLICY ---
 
     # what to pass to the policy (note this is after the encoder)

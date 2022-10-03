@@ -2,6 +2,7 @@ import random
 
 import numpy as np
 
+from gym.spaces import Box
 from .half_cheetah import HalfCheetahEnv
 
 
@@ -24,11 +25,17 @@ class HalfCheetahVelEnv(HalfCheetahEnv):
         (https://homes.cs.washington.edu/~todorov/papers/TodorovIROS12.pdf)
     """
 
-    def __init__(self, max_episode_steps=200):
+    def __init__(self, max_episode_steps=200, eval_mode=False):
+        self.eval_mode = eval_mode
         self.set_task(self.sample_tasks(1)[0])
         self._max_episode_steps = max_episode_steps
         self.task_dim = 1
         super(HalfCheetahVelEnv, self).__init__()
+        self.observation_space = Box(low=-np.inf, high=np.inf, shape=(20,),
+                                     dtype=np.float64)
+        self._time = 0
+        self._return = 0
+        self._last_return = 0
 
     def step(self, action):
         xposbefore = self.sim.data.qpos[0]
@@ -45,23 +52,47 @@ class HalfCheetahVelEnv(HalfCheetahEnv):
         infos = dict(reward_forward=forward_reward,
                      reward_ctrl=-ctrl_cost,
                      task=self.get_task())
+        self._time += 1
+        self._return += reward
+        if self._time % self._max_episode_steps == 0:
+            # print(f'[{self._time//self._max_episode_steps}] '
+            #       f'{self.goal_velocity},\t{self._return}')
+            self._last_return = self._return
+            self._return = 0
         return observation, reward, done, infos
+
+    def get_last_return(self):
+        return self._last_return
 
     def set_task(self, task):
         if isinstance(task, np.ndarray):
             task = task[0]
         self.goal_velocity = task
+        return task
 
     def get_task(self):
         return np.array([self.goal_velocity])
 
+    def sample_task(self, p_orig=1, alpha=0.1):
+        x = random.uniform(0.0, 1.0)
+        if p_orig < 1:
+            is_orig = random.random() < p_orig
+            if not is_orig:
+                x = (1-alpha) + alpha*x
+        return 7.0 * x
+
     def sample_tasks(self, n_tasks):
-        return [random.uniform(0.0, 3.0) for _ in range(n_tasks)]
+        reg = 1  # set 1 for standard sampling, 0.25 for 0.75-tail
+        p_orig = 1 if self.eval_mode else reg
+        return [self.sample_task(p_orig) for _ in range(n_tasks)]
 
     def reset_task(self, task):
         if task is None:
             task = self.sample_tasks(1)[0]
         self.set_task(task)
+        self._time = 0
+        self._last_return = self._return
+        self._return = 0
         # self.reset()
 
 

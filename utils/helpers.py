@@ -43,11 +43,14 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 #         save_obj(obs_rms, save_path, "env_obs_rms{0}.pkl".format(iter_idx))
 
 
-def reset_env(env, args, indices=None, state=None):
+def reset_env(env, args, indices=None, state=None, cem=None):
     """ env can be many environments or just one """
     # reset all environments
     if (indices is None) or (len(indices) == args.num_processes):
         state = env.reset().float().to(device)
+        if cem is not None:
+            tasks = [cem.sample()[0] for _ in range(args.num_processes)]
+            env.set_task(tasks)
     # reset only the ones given by indices
     else:
         assert state is not None
@@ -56,7 +59,7 @@ def reset_env(env, args, indices=None, state=None):
 
     belief = torch.from_numpy(env.get_belief()).float().to(device) if args.pass_belief_to_policy else None
     task = torch.from_numpy(env.get_task()).float().to(device) if args.pass_task_to_policy else None
-        
+
     return state, belief, task
 
 

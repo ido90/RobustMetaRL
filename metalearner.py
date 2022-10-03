@@ -3,6 +3,7 @@ import time
 
 import gym
 import numpy as np
+import pandas as pd
 import torch
 
 from algorithms.a2c import A2C
@@ -14,6 +15,8 @@ from utils import evaluation as utl_eval
 from utils import helpers as utl
 from utils.tb_logger import TBLogger
 from vae import VaribadVAE
+
+import cross_entropy_sampler as cem
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -82,6 +85,13 @@ class MetaLearner:
         self.vae = VaribadVAE(self.args, self.logger, lambda: self.iter_idx)
         self.policy_storage = self.initialise_policy_storage()
         self.policy = self.initialise_policy()
+
+        self.cem = None
+        if self.args.cem:
+            self.cem = cem.get_cem_sampler(args.env_name)
+
+        # record results
+        self.rr = dict(iter=[], task_id=[], task=[], ep=[], ret=[])
 
     def initialise_policy_storage(self):
         return OnlineStorage(args=self.args,
@@ -161,7 +171,7 @@ class MetaLearner:
         start_time = time.time()
 
         # reset environments
-        prev_state, belief, task = utl.reset_env(self.envs, self.args)
+        prev_state, belief, task = utl.reset_env(self.envs, self.args, cem=self.cem)
 
         # insert initial observation / embeddings to rollout storage
         self.policy_storage.prev_state[0].copy_(prev_state)
@@ -235,8 +245,12 @@ class MetaLearner:
                 # reset environments that are done
                 done_indices = np.argwhere(done.cpu().flatten()).flatten()
                 if len(done_indices) > 0:
+                    if self.cem is not None:
+                        for r in self.envs.get_return():
+                            self.cem.update(r, save=True)
                     next_state, belief, task = utl.reset_env(self.envs, self.args,
-                                                             indices=done_indices, state=next_state)
+                                                             indices=done_indices, state=next_state,
+                                                             cem=self.cem)
 
                 # TODO: deal with resampling for posterior sampling algorithm
                 #     latent_sample = latent_sample
@@ -360,6 +374,38 @@ class MetaLearner:
 
         return policy_train_stats
 
+    def test(self, n_episodes=1000):
+        start_time = time.time()
+        n_iters = int(np.ceil(n_episodes / self.args.num_processes))
+        rr = dict(task=[], ep=[], ret=[])
+
+        for i in range(n_iters):
+            ret_rms = self.envs.venv.ret_rms if self.args.norm_rew_for_policy else None
+            returns_per_episode, tasks = utl_eval.evaluate(
+                args=self.args,
+                policy=self.policy,
+                ret_rms=ret_rms,
+                encoder=self.vae.encoder,
+                iter_idx=i,  # used for seed
+                tasks=None,
+            )
+
+            # update data-frame
+            n_tasks = returns_per_episode.shape[0]
+            n_eps = returns_per_episode.shape[1]
+            n = n_tasks * n_eps
+            rr['task'].extend(list(np.repeat(tasks, n_eps)))
+            rr['ep'].extend(n_tasks * list(np.arange(n_eps)))
+            rr['ret'].extend(returns_per_episode.cpu().numpy().reshape(-1))
+
+        rr = pd.DataFrame(rr)
+        pd.to_pickle(rr, f'{self.logger.full_output_folder}/test_res.pkl')
+        ret_mean = rr.ret.mean()
+        ret_cvar = cvar(rr[rr.ep==n_eps-1].ret.values, self.args.alpha)
+        print(f"Test results: mean={ret_mean},\tCVaR5={ret_cvar}\t"
+              f"[{(time.time()-start_time)/60:.1f} min]")
+        return rr
+
     def log(self, run_stats, train_stats, start_time):
 
         # --- visualise behaviour of policy ---
@@ -387,28 +433,46 @@ class MetaLearner:
         if (self.iter_idx + 1) % self.args.eval_interval == 0:
 
             ret_rms = self.envs.venv.ret_rms if self.args.norm_rew_for_policy else None
-            returns_per_episode = utl_eval.evaluate(args=self.args,
-                                                    policy=self.policy,
-                                                    ret_rms=ret_rms,
-                                                    encoder=self.vae.encoder,
-                                                    iter_idx=self.iter_idx,
-                                                    tasks=self.train_tasks,
-                                                    )
+            returns_per_episode, tasks = utl_eval.evaluate(
+                args=self.args,
+                policy=self.policy,
+                ret_rms=ret_rms,
+                encoder=self.vae.encoder,
+                iter_idx=self.iter_idx,
+                tasks=self.train_tasks,  # None (unless args.single_task_mode==True)
+            )
 
             # log the return avg/std across tasks (=processes)
             returns_avg = returns_per_episode.mean(dim=0)
+            returns_cvar5 = cvar(returns_per_episode, self.args.alpha, dim=0)
             returns_std = returns_per_episode.std(dim=0)
             for k in range(len(returns_avg)):
                 self.logger.add('return_avg_per_iter/episode_{}'.format(k + 1), returns_avg[k], self.iter_idx)
                 self.logger.add('return_avg_per_frame/episode_{}'.format(k + 1), returns_avg[k], self.frames)
+                self.logger.add('return_cvar5_per_iter/episode_{}'.format(k + 1), returns_cvar5[k], self.iter_idx)
+                self.logger.add('return_cvar5_per_frame/episode_{}'.format(k + 1), returns_cvar5[k], self.frames)
                 self.logger.add('return_std_per_iter/episode_{}'.format(k + 1), returns_std[k], self.iter_idx)
                 self.logger.add('return_std_per_frame/episode_{}'.format(k + 1), returns_std[k], self.frames)
 
             print(f"Updates {self.iter_idx}, "
                   f"Frames {self.frames}, "
                   f"FPS {int(self.frames / (time.time() - start_time))}, "
-                  f"\n Mean return (train): {returns_avg[-1].item()} \n"
+                  f"Mean task (train): {np.mean(self.envs.get_task()):.2f}, "
+                  f"\n Mean return (train): {returns_avg[0].item():.2f}, {returns_avg[-1].item():.2f}; \t"
+                  f"CVaR: {returns_cvar5[0].item():.2f}, {returns_cvar5[-1].item():.2f}\n"
                   )
+
+            # update data-frame
+            n_tasks = returns_per_episode.shape[0]
+            n_eps = returns_per_episode.shape[1]
+            n = n_tasks * n_eps
+            self.rr['iter'].extend(n*[self.iter_idx])
+            self.rr['task_id'].extend(list(np.repeat(np.arange(n_tasks), n_eps)))
+            self.rr['task'].extend(list(np.repeat(tasks, n_eps)))
+            self.rr['ep'].extend(n_tasks*list(np.arange(n_eps)))
+            self.rr['ret'].extend(returns_per_episode.cpu().numpy().reshape(-1))
+            rr = pd.DataFrame(self.rr)
+            pd.to_pickle(rr, f'{self.logger.full_output_folder}/res.pkl')
 
         # --- save models ---
 
@@ -482,3 +546,22 @@ class MetaLearner:
                     if param_list[0].grad is not None:
                         param_grad_mean = np.mean([param_list[i].grad.cpu().numpy().mean() for i in range(len(param_list))])
                         self.logger.add('gradients/{}'.format(name), param_grad_mean, self.iter_idx)
+
+def cvar(x, alpha, **kwargs):
+    if isinstance(x, torch.Tensor):
+        return cvar_torch(x, alpha, **kwargs)
+    return cvar_numpy(x, alpha)
+
+def cvar_torch(x, alpha, dim=0):
+    n = x.shape[dim]
+    n = int(np.ceil(alpha*n))
+    x = torch.sort(x, dim=dim)[0]
+    if dim != 0:
+        raise ValueError
+    x = x[:n]
+    return x.mean(dim=dim)
+
+def cvar_numpy(x, alpha):
+    n = int(np.ceil(alpha*len(x)))
+    x = sorted(x)[:n]
+    return np.mean(x)

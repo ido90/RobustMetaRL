@@ -169,6 +169,7 @@ def main():
         else:
             learner = MetaLearner(args)
         learner.train()
+        learner.test()
 
 
 if __name__ == '__main__':
