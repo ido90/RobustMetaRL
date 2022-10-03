@@ -2,7 +2,9 @@
 *.pyc
 __pycache__
 .idea
+.ipynb_checkpoints/
 
 logs/
 scripts/
 docker/
+models/
