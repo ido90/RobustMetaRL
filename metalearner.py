@@ -88,6 +88,7 @@ class MetaLearner:
 
         self.cem = None
         if self.args.cem:
+            print('\nCreating cem sampler.\n')
             self.cem = cem.get_cem_sampler(args.env_name)
 
         # record results
