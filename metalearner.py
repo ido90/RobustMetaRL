@@ -460,7 +460,7 @@ class MetaLearner:
                   f"FPS {int(self.frames / (time.time() - start_time))}, "
                   f"Mean task (train): {np.mean(self.envs.get_task()):.2f}, "
                   f"\n Mean return (train): {returns_avg[0].item():.2f}, {returns_avg[-1].item():.2f}; \t"
-                  f"CVaR: {returns_cvar[0].item():.2f}, {returns_cvar[-1].item():.2f}\n"
+                  f"CVaR_{self.args.alpha:.2f}: {returns_cvar[0].item():.2f}, {returns_cvar[-1].item():.2f}\n"
                   )
 
             # update data-frame
