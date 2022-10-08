@@ -17,15 +17,14 @@ class HalfCheetahBodyEnv(HalfCheetahEnv):
 
     def __init__(self, max_episode_steps=200, eval_mode=False):
         self.eval_mode = eval_mode
-        self.set_task(self.sample_task())
         self._max_episode_steps = max_episode_steps
         self.task_dim = 1
         super(HalfCheetahBodyEnv, self).__init__()
         self.observation_space = Box(low=-np.inf, high=np.inf, shape=(20,),
                                      dtype=np.float64)
 
-        self.original_mass_vec = self.model.body_mass.copy()
-        print(self.original_mass_vec)  # TODO TMP
+        self.original_mass_vec = self.model.body_mass.copy()  # 8 elements
+        self.set_task(self.sample_task())
 
         self._time = 0
         self._return = 0
@@ -63,8 +62,6 @@ class HalfCheetahBodyEnv(HalfCheetahEnv):
         self.task = task
         for i in range(len(self.model.body_mass)):
             self.model.body_mass[i] = task * self.original_mass_vec[i]
-        print(task)
-        print(self.model.body_mass)  # TODO TMP
         return task
 
     def get_task(self):
