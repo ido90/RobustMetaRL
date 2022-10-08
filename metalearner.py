@@ -403,8 +403,8 @@ class MetaLearner:
         pd.to_pickle(rr, f'{self.logger.full_output_folder}/test_res.pkl')
         ret_mean = rr.ret.mean()
         ret_cvar = cvar(rr[rr.ep==n_eps-1].ret.values, self.args.alpha)
-        print(f"Test results: mean={ret_mean},\tCVaR={ret_cvar}\t"
-              f"[{(time.time()-start_time)/60:.1f} min]")
+        print(f"Test results: mean={ret_mean},\tCVaR_{self.args.alpha:.2f}="
+              f"{ret_cvar}\t[{(time.time()-start_time)/60:.1f} min]")
         return rr
 
     def log(self, run_stats, train_stats, start_time):
