@@ -402,7 +402,7 @@ class MetaLearner:
         pd.to_pickle(rr, f'{self.logger.full_output_folder}/test_res.pkl')
         ret_mean = rr.ret.mean()
         ret_cvar = cvar(rr[rr.ep==n_eps-1].ret.values, self.args.alpha)
-        print(f"Test results: mean={ret_mean},\tCVaR5={ret_cvar}\t"
+        print(f"Test results: mean={ret_mean},\tCVaR={ret_cvar}\t"
               f"[{(time.time()-start_time)/60:.1f} min]")
         return rr
 
@@ -444,13 +444,13 @@ class MetaLearner:
 
             # log the return avg/std across tasks (=processes)
             returns_avg = returns_per_episode.mean(dim=0)
-            returns_cvar5 = cvar(returns_per_episode, self.args.alpha, dim=0)
+            returns_cvar = cvar(returns_per_episode, self.args.alpha, dim=0)
             returns_std = returns_per_episode.std(dim=0)
             for k in range(len(returns_avg)):
                 self.logger.add('return_avg_per_iter/episode_{}'.format(k + 1), returns_avg[k], self.iter_idx)
                 self.logger.add('return_avg_per_frame/episode_{}'.format(k + 1), returns_avg[k], self.frames)
-                self.logger.add('return_cvar5_per_iter/episode_{}'.format(k + 1), returns_cvar5[k], self.iter_idx)
-                self.logger.add('return_cvar5_per_frame/episode_{}'.format(k + 1), returns_cvar5[k], self.frames)
+                self.logger.add('return_cvar_per_iter/episode_{}'.format(k + 1), returns_cvar[k], self.iter_idx)
+                self.logger.add('return_cvar_per_frame/episode_{}'.format(k + 1), returns_cvar[k], self.frames)
                 self.logger.add('return_std_per_iter/episode_{}'.format(k + 1), returns_std[k], self.iter_idx)
                 self.logger.add('return_std_per_frame/episode_{}'.format(k + 1), returns_std[k], self.frames)
 
@@ -459,7 +459,7 @@ class MetaLearner:
                   f"FPS {int(self.frames / (time.time() - start_time))}, "
                   f"Mean task (train): {np.mean(self.envs.get_task()):.2f}, "
                   f"\n Mean return (train): {returns_avg[0].item():.2f}, {returns_avg[-1].item():.2f}; \t"
-                  f"CVaR: {returns_cvar5[0].item():.2f}, {returns_cvar5[-1].item():.2f}\n"
+                  f"CVaR: {returns_cvar[0].item():.2f}, {returns_cvar[-1].item():.2f}\n"
                   )
 
             # update data-frame
