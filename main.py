@@ -17,6 +17,7 @@ from config.mujoco import \
     args_cheetah_dir_multitask, args_cheetah_dir_expert, args_cheetah_dir_rl2, args_cheetah_dir_varibad, \
     args_cheetah_vel_multitask, args_cheetah_vel_expert, args_cheetah_vel_rl2, args_cheetah_vel_varibad, \
     args_cheetah_vel_avg, \
+    args_cheetah_body_varibad, \
     args_ant_dir_multitask, args_ant_dir_expert, args_ant_dir_rl2, args_ant_dir_varibad, \
     args_ant_goal_multitask, args_ant_goal_expert, args_ant_goal_rl2, args_ant_goal_varibad, \
     args_ant_goal_humplik, \
@@ -76,6 +77,10 @@ def main():
         args = args_cheetah_vel_varibad.get_args(rest_args)
     elif env == 'cheetah_vel_rl2':
         args = args_cheetah_vel_rl2.get_args(rest_args)
+    #
+    # - CheetahBody -
+    elif env == 'cheetah_body_varibad':
+        args = args_cheetah_body_varibad.get_args(rest_args)
     #
     # - AntDir -
     elif env == 'ant_dir_multitask':
