@@ -6,26 +6,24 @@ from gym.spaces import Box
 from .half_cheetah import HalfCheetahEnv
 
 
-class HalfCheetahBodyEnv(HalfCheetahEnv):
-    """Half-cheetah environment with varying body. The code is adapted from
+class HalfCheetahMassEnv(HalfCheetahEnv):
+    """Half-cheetah environment with varying Mass. The code is adapted from
     https://github.com/lmzintgraf/varibad/blob/master/environments/mujoco/half_cheetah_vel.py
 
     The half-cheetah follows the dynamics and rewards from MuJoCo.
-    Its tasks correspond to different values of cheetah body mass, damping and torso length,
+    Its tasks correspond to different values of cheetah body mass,
     sampled log-uniformly in the range of [50%, 200%] of their original values.
     """
 
     def __init__(self, max_episode_steps=200, eval_mode=False):
         self.eval_mode = eval_mode
         self._max_episode_steps = max_episode_steps
-        self.task_dim = 3
-        super(HalfCheetahBodyEnv, self).__init__()
+        self.task_dim = 1
+        super(HalfCheetahMassEnv, self).__init__()
         self.observation_space = Box(low=-np.inf, high=np.inf, shape=(20,),
                                      dtype=np.float64)
 
         self.original_mass_vec = self.model.body_mass.copy()  # 8 elements
-        self.original_damp_vec = self.model.dof_damping.copy()  # 8 elements
-        self.original_len = self.model.geom_size[1,1].copy()
         self.set_task(self.sample_task())
 
         self._time = 0
@@ -59,22 +57,19 @@ class HalfCheetahBodyEnv(HalfCheetahEnv):
         return self._last_return
 
     def set_task(self, task):
+        if isinstance(task, np.ndarray):
+            task = task[0]
         self.task = task
-
-        self.unwrapped.model.geom_size[1:, 0] = 0.046 * task[0]
         for i in range(len(self.model.body_mass)):
-            self.model.body_mass[i] = task[0] * self.original_mass_vec[i]
-            self.model.dof_damping[i] = task[1] * self.original_damp_vec[i]
-        self.model.geom_size[1, 1] = task[2] * self.original_len
-
+            self.model.body_mass[i] = task * self.original_mass_vec[i]
+        self.unwrapped.model.geom_size[1:, 0] = 0.046 * task
         return task
 
     def get_task(self):
         return self.task
 
     def sample_task(self):
-        return np.array([2 ** random.uniform(-1, 1)
-                         for _ in range(self.task_dim)])
+        return 2 ** random.uniform(-1, 1)
 
     def sample_tasks(self, n_tasks):
         return [self.sample_task() for _ in range(n_tasks)]
