@@ -3,6 +3,7 @@ Based on https://github.com/ikostrikov/pytorch-a2c-ppo-acktr
 
 Used for on-policy rollout storages.
 """
+import numpy as np
 import torch
 from torch.utils.data.sampler import BatchSampler, SubsetRandomSampler
 
@@ -124,6 +125,8 @@ class OnlineStorage(object):
                latent_sample=None,
                latent_mean=None,
                latent_logvar=None,
+               #
+               alpha_thresh=None,
                ):
         self.prev_state[self.step + 1].copy_(state)
         if self.args.pass_belief_to_policy:
@@ -146,6 +149,13 @@ class OnlineStorage(object):
         self.bad_masks[self.step + 1].copy_(bad_masks)
         self.done[self.step + 1].copy_(done)
         self.step = (self.step + 1) % self.num_steps
+
+        if alpha_thresh is not None and self.step == 0:
+            # mark all episodes as bad except for bottom alpha returns
+            returns = self.rewards_raw.sum(dim=0)[:, 0]
+            q = cvar(returns, alpha_thresh)
+            high_rets = returns > q
+            self.bad_masks[:, high_rets, :] = 0
 
     def after_update(self):
         self.prev_state[0].copy_(self.prev_state[-1])
@@ -276,3 +286,13 @@ class OnlineStorage(object):
                   actions_batch, \
                   latent_sample_batch, latent_mean_batch, latent_logvar_batch, \
                   value_preds_batch, return_batch, old_action_log_probs_batch, adv_targ
+
+
+def cvar(x, alpha, dim=0):
+    n = x.shape[dim]
+    n = int(np.ceil(alpha*n))
+    x = torch.sort(x, dim=dim)[0]
+    if dim != 0:
+        raise ValueError
+    x = x[:n]
+    return x.mean(dim=dim)
