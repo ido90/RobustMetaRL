@@ -257,7 +257,7 @@ def qgroups(x, nbins=5, apply_labs=True):
 
 def compare_quantiles(dd, x, y, hue=None, fac=None, xbins=5, hbins=5, fbins=4,
                       ci=95, box=False, mean=np.mean, copy=True, axs=None, a0=0,
-                      axs_args=None, **kwargs):
+                      lab_rotation=20, axs_args=None, **kwargs):
     if copy: dd = dd.copy()
     # prepare groups
     xx = x+'_tmp'
@@ -313,7 +313,7 @@ def compare_quantiles(dd, x, y, hue=None, fac=None, xbins=5, hbins=5, fbins=4,
                          ci=ci, **kwargs)
         if relabel:
             ax.set_xticks(np.arange(len(relabel)))
-            ax.set_xticklabels(relabel, fontsize=12, rotation=20)
+            ax.set_xticklabels(relabel, fontsize=12, rotation=lab_rotation)
         labels(axs[a], x, y, f'{fac}: {facs[a]}' if fac else None, fontsize=15)
         axs[a].legend(title=hue, fontsize=12)
     pd.options.mode.chained_assignment = 'warn'
