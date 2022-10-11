@@ -17,7 +17,7 @@ from config.mujoco import \
     args_cheetah_dir_multitask, args_cheetah_dir_expert, args_cheetah_dir_rl2, args_cheetah_dir_varibad, \
     args_cheetah_vel_multitask, args_cheetah_vel_expert, args_cheetah_vel_rl2, args_cheetah_vel_varibad, \
     args_cheetah_vel_avg, \
-    args_cheetah_body_varibad, \
+    args_cheetah_mass_varibad, args_cheetah_body_varibad, \
     args_ant_dir_multitask, args_ant_dir_expert, args_ant_dir_rl2, args_ant_dir_varibad, \
     args_ant_goal_multitask, args_ant_goal_expert, args_ant_goal_rl2, args_ant_goal_varibad, \
     args_ant_goal_humplik, \
@@ -79,6 +79,8 @@ def main():
         args = args_cheetah_vel_rl2.get_args(rest_args)
     #
     # - CheetahBody -
+    elif env == 'cheetah_mass_varibad':
+        args = args_cheetah_mass_varibad.get_args(rest_args)
     elif env == 'cheetah_body_varibad':
         args = args_cheetah_body_varibad.get_args(rest_args)
     #
@@ -174,6 +176,12 @@ def main():
         else:
             learner = MetaLearner(args)
         learner.train()
+
+        # test
+        if args.save_interval <= 0:
+            # save_interval<=0 means that we save only the best model - hence we should load it before testing
+            print(f'Loading model from iteration {learner.best_eval_iter:d}/{learner.iter_idx:d}.')
+            learner.load_model()
         learner.test()
 
 

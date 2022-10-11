@@ -89,10 +89,15 @@ class MetaLearner:
         self.cem = None
         if self.args.cem:
             print('\nCreating cem sampler.\n')
-            self.cem = cem.get_cem_sampler(args.env_name)
+            self.cem = cem.get_cem_sampler(args.env_name, args.seed)
 
         # record results
-        self.rr = dict(iter=[], task_id=[], task=[], ep=[], ret=[])
+        self.rr = dict(iter=[], task_id=[], ep=[], ret=[])
+        for i in range(self.args.task_dim):
+            self.rr[f'task{i:d}'] = []
+        self.best_eval_return = -np.inf
+        self.best_eval_iter = -1
+        self.last_eval_improved = False
 
     def initialise_policy_storage(self):
         return OnlineStorage(args=self.args,
@@ -232,13 +237,15 @@ class MetaLearner:
 
                 # before resetting, update the embedding and add to vae buffer
                 # (last state might include useful task info)
+                alpha_thresh = self.args.alpha if self.args.tail else None
                 if not (self.args.disable_decoder and self.args.disable_kl_term):
                     self.vae.rollout_storage.insert(prev_state.clone(),
                                                     action.detach().clone(),
                                                     next_state.clone(),
                                                     rew_raw.clone(),
                                                     done.clone(),
-                                                    task.clone() if task is not None else None)
+                                                    task.clone() if task is not None else None,
+                                                    alpha_thresh=alpha_thresh)
 
                 # add the obs before reset to the policy storage
                 self.policy_storage.next_state[step] = next_state.clone()
@@ -273,6 +280,7 @@ class MetaLearner:
                     latent_sample=latent_sample,
                     latent_mean=latent_mean,
                     latent_logvar=latent_logvar,
+                    alpha_thresh=alpha_thresh,
                 )
 
                 prev_state = next_state
@@ -378,7 +386,9 @@ class MetaLearner:
     def test(self, n_episodes=1000):
         start_time = time.time()
         n_iters = int(np.ceil(n_episodes / self.args.num_processes))
-        rr = dict(task=[], ep=[], ret=[])
+        rr = dict(ep=[], ret=[])
+        for i in range(self.args.task_dim):
+            rr[f'task{i:d}'] = []
 
         for i in range(n_iters):
             ret_rms = self.envs.venv.ret_rms if self.args.norm_rew_for_policy else None
@@ -395,7 +405,12 @@ class MetaLearner:
             n_tasks = returns_per_episode.shape[0]
             n_eps = returns_per_episode.shape[1]
             n = n_tasks * n_eps
-            rr['task'].extend(list(np.repeat(tasks, n_eps)))
+            for i in range(self.args.task_dim):
+                if self.args.task_dim == 1:
+                    task_i = tasks
+                else:
+                    task_i = [tsk[i] for tsk in tasks]
+                rr[f'task{i:d}'].extend(list(np.repeat(task_i, n_eps)))
             rr['ep'].extend(n_tasks * list(np.arange(n_eps)))
             rr['ret'].extend(returns_per_episode.cpu().numpy().reshape(-1))
 
@@ -455,6 +470,15 @@ class MetaLearner:
                 self.logger.add('return_std_per_iter/episode_{}'.format(k + 1), returns_std[k], self.iter_idx)
                 self.logger.add('return_std_per_frame/episode_{}'.format(k + 1), returns_std[k], self.frames)
 
+            eval_return = returns_cvar if (self.args.cem or self.args.tail) else returns_avg
+            eval_return = eval_return.mean().item()
+            if eval_return >= self.best_eval_return:
+                self.best_eval_return = eval_return
+                self.best_eval_iter = self.iter_idx
+                self.last_eval_improved = True
+            else:
+                self.last_eval_improved = False
+
             print(f"Updates {self.iter_idx}, "
                   f"Frames {self.frames}, "
                   f"FPS {int(self.frames / (time.time() - start_time))}, "
@@ -469,7 +493,12 @@ class MetaLearner:
             n = n_tasks * n_eps
             self.rr['iter'].extend(n*[self.iter_idx])
             self.rr['task_id'].extend(list(np.repeat(np.arange(n_tasks), n_eps)))
-            self.rr['task'].extend(list(np.repeat(tasks, n_eps)))
+            for i in range(self.args.task_dim):
+                if self.args.task_dim == 1:
+                    task_i = tasks
+                else:
+                    task_i = [tsk[i] for tsk in tasks]
+                self.rr[f'task{i:d}'].extend(list(np.repeat(task_i, n_eps)))
             self.rr['ep'].extend(n_tasks*list(np.arange(n_eps)))
             self.rr['ret'].extend(returns_per_episode.cpu().numpy().reshape(-1))
             rr = pd.DataFrame(self.rr)
@@ -477,7 +506,7 @@ class MetaLearner:
 
         # --- save models ---
 
-        if (self.iter_idx + 1) % self.args.save_interval == 0:
+        if self.is_saving_model():
             save_path = os.path.join(self.logger.full_output_folder, 'models')
             if not os.path.exists(save_path):
                 os.mkdir(save_path)
@@ -547,6 +576,38 @@ class MetaLearner:
                     if param_list[0].grad is not None:
                         param_grad_mean = np.mean([param_list[i].grad.cpu().numpy().mean() for i in range(len(param_list))])
                         self.logger.add('gradients/{}'.format(name), param_grad_mean, self.iter_idx)
+
+    def is_saving_model(self):
+        if self.args.save_interval > 0:
+            # save every save_interval updates
+            return (self.iter_idx + 1) % self.args.save_interval == 0
+        else:
+            # save whenever evaluation gets better
+            is_evaluating = (self.iter_idx + 1) % self.args.eval_interval == 0
+            improved = self.last_eval_improved
+            return is_evaluating and improved
+
+    def load_model(self, idx_label=''):
+        save_path = os.path.join(self.logger.full_output_folder, 'models')
+        self.policy.actor_critic = torch.load(os.path.join(save_path, f"policy{idx_label}.pt"))
+        self.vae.encoder = torch.load(os.path.join(save_path, f"encoder{idx_label}.pt"))
+        try:
+            self.vae.state_decoder = torch.load(os.path.join(save_path, f"state_decoder{idx_label}.pt"))
+        except FileNotFoundError:
+            pass
+        try:
+            self.vae.reward_decoder = torch.load(os.path.join(save_path, f"reward_decoder{idx_label}.pt"))
+        except FileNotFoundError:
+            pass
+        try:
+            self.vae.task_decoder = torch.load(os.path.join(save_path, f"task_decoder{idx_label}.pt"))
+        except FileNotFoundError:
+            pass
+
+        # normalisation params of envs
+        if self.args.norm_rew_for_policy:
+            self.envs.venv.ret_rms = utl.load_obj(save_path, f"env_rew_rms{idx_label}")
+
 
 def cvar(x, alpha, **kwargs):
     if isinstance(x, torch.Tensor):
