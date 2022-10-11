@@ -319,11 +319,13 @@ def summarize_test_over_seeds(rrm, rrc, alpha, title=None):
     axs.labs(a, 'method', f'$CVaR_{{{alpha}}}$ return', title)
     a += 1
 
-    utils.qplot(rrm, 'ret', 'seed', 'method', q=np.linspace(0,1,100), ax=axs[a])
+    utils.qplot(rrm, 'ret', 'seed', 'method', q=np.linspace(0,1,n_seeds),
+                dots=True, ax=axs[a])
     axs.labs(a, f'quantile over {n_seeds} seeds [%]', 'mean return', title)
     a += 1
 
-    utils.qplot(rrc, 'ret', 'seed', 'method', q=np.linspace(0,1,100), ax=axs[a])
+    utils.qplot(rrc, 'ret', 'seed', 'method', q=np.linspace(0,1,n_seeds),
+                dots=True, ax=axs[a])
     axs.labs(a, f'quantile over {n_seeds} seeds [%]', f'$CVaR_{{{alpha}}}$ return',
              title)
     a += 1

@@ -43,12 +43,13 @@ def quantile(x, q, w=None, is_sorted=False, estimate_underlying_quantile=False):
     w /= w[-1]
     return np.interp(q, w, x)
 
-def plot_quantiles(x, ax=None, q=None, showmeans=True, means_args=None, **kwargs):
+def plot_quantiles(x, ax=None, q=None, showmeans=True, means_args=None,
+                   dots=False, **kwargs):
     if ax is None: ax = Axes(1,1)[0]
     if q is None: q = np.arange(101) / 100
     m = np.mean(x)
     x = quantile(x, q)
-    h = ax.plot(100*q, x, '-', **kwargs)
+    h = ax.plot(100*q, x, '.-' if dots else '-', **kwargs)
     if showmeans:
         if means_args is None: means_args = {}
         ax.axhline(m, linestyle='--', color=h[0].get_color(), **means_args)
