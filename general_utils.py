@@ -8,6 +8,7 @@ import os, gc, random
 from time import sleep
 from warnings import warn
 import numpy as np
+from scipy import signal
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
@@ -82,9 +83,9 @@ def qplot(data, y, x=None, hue=None, ax=None, **kwargs):
 
     return ax
 
-def smooth(y, n=10):
-    w = np.ones(n)/n
-    return np.convolve(y, w, mode='same')
+def smooth(y, n=10, deg=2):
+    if n%2 == 0: n += 1
+    return signal.savgol_filter(y, n, deg)
 
 def labels(ax, xlab=None, ylab=None, title=None, fontsize=12):
     if isinstance(fontsize, int):
