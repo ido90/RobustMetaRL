@@ -89,7 +89,7 @@ class MetaLearner:
         self.cem = None
         if self.args.cem:
             print('\nCreating cem sampler.\n')
-            self.cem = cem.get_cem_sampler(args.env_name, args.seed)
+            self.cem = cem.get_cem_sampler(args.env_name, args.seed, args.oracle)
 
         # record results
         self.rr = dict(iter=[], task_id=[], ep=[], ret=[])
