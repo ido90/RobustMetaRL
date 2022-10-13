@@ -128,8 +128,8 @@ class LogBeta(cem.CEM):
 
     def __init__(self, *args, log_range=(-1, 1), eps=0.02, **kwargs):
         super(LogBeta, self).__init__(*args, **kwargs)
-        self.default_dist_titles = ['mass_mean', 'damping_mean', 'len_mean']
-        self.default_samp_titles = ['mass', 'damping', 'len']
+        self.default_dist_titles = ['mass_mean', 'inertia_mean', 'head_size_mean']
+        self.default_samp_titles = ['mass', 'inertia', 'head_size']
         self.log_range = log_range
         self.eps = eps
 

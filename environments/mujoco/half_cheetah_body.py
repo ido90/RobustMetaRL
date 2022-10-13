@@ -24,8 +24,8 @@ class HalfCheetahBodyEnv(HalfCheetahEnv):
                                      dtype=np.float64)
 
         self.original_mass_vec = self.model.body_mass.copy()  # 8 elements
-        self.original_damp_vec = self.model.dof_damping.copy()  # 8 elements
-        self.original_len = self.model.geom_size[1,1].copy()
+        self.original_inertia_vec = self.model.body_inertia.copy()  # 8x3 elements
+        self.original_len = self.model.geom_size[2, 1].copy()
         self.set_task(self.sample_task())
 
         self._time = 0
@@ -64,8 +64,8 @@ class HalfCheetahBodyEnv(HalfCheetahEnv):
         self.unwrapped.model.geom_size[1:, 0] = 0.046 * task[0]
         for i in range(len(self.model.body_mass)):
             self.model.body_mass[i] = task[0] * self.original_mass_vec[i]
-            self.model.dof_damping[i] = task[1] * self.original_damp_vec[i]
-        self.model.geom_size[1, 1] = task[2] * self.original_len
+            self.model.body_inertia[i] = task[1] * self.original_inertia_vec[i]
+        self.model.geom_size[2, 1] = task[2] * self.original_len
 
         return task
 
