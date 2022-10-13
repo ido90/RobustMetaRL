@@ -178,11 +178,8 @@ def main():
         learner.train()
 
         # test
-        if args.save_interval <= 0:
-            # save_interval<=0 means that we save only the best model - hence we should load it before testing
-            print(f'Loading model from iteration {learner.best_eval_iter:d}/{learner.iter_idx:d}.')
-            learner.load_model()
-        learner.test()
+        learner.test(load='final')
+        learner.test(load='best')
 
 
 if __name__ == '__main__':

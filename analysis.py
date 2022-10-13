@@ -6,8 +6,8 @@ import seaborn as sns
 import cross_entropy_sampler as cem
 import general_utils as utils
 
-TRAIN_FILE = 'res.pkl'
-TEST_FILE = 'test_res.pkl'
+TRAIN_FILE = 'res'
+TEST_FILE = 'test_res'
 
 def get_base_path(env_name):
     return f'logs/logs_{env_name}'
@@ -51,7 +51,7 @@ def load_train_data(env_name, env_short, methods, seeds, alpha,
         for seed in seeds:
             e = get_dir(base_path, env_short, method, seed)
             print(e)
-            d = pd.read_pickle(f'{base_path}/{e}/{TRAIN_FILE}')
+            d = pd.read_pickle(f'{base_path}/{e}/{TRAIN_FILE}.pkl')
             d['method'] = method
             d['seed'] = seed
             dd = pd.concat((dd, d))
@@ -88,15 +88,19 @@ def load_train_data(env_name, env_short, methods, seeds, alpha,
 
     return dd, dda, ddm, ddc, dd0, dda0, task_dim
 
-def load_test_data(env_name, env_short, methods, seeds, alpha):
+def load_test_data(env_name, env_short, methods, seeds, alpha, model='best'):
     base_path = get_base_path(env_name)
     cvar = get_cvar_fun(alpha)
+    fname = TEST_FILE
+    if model is not None:
+        fname += f'_{model}'
+
     rr = pd.DataFrame()
 
     for method in methods:
         for seed in seeds:
             e = get_dir(base_path, env_short, method, seed)
-            d = pd.read_pickle(f'{base_path}/{e}/{TEST_FILE}')
+            d = pd.read_pickle(f'{base_path}/{e}/{fname}.pkl')
             d['method'] = method
             d['seed'] = seed
             rr = pd.concat((rr, d))

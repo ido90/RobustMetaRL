@@ -1,5 +1,6 @@
 import os
 import time
+import warnings
 
 import gym
 import numpy as np
@@ -314,6 +315,7 @@ class MetaLearner:
             # clean up after update
             self.policy_storage.after_update()
 
+        self.save_model(best=False)
         self.envs.close()
 
     def encode_running_trajectory(self):
@@ -383,7 +385,18 @@ class MetaLearner:
 
         return policy_train_stats
 
-    def test(self, n_episodes=1000):
+    def test(self, n_episodes=1000, load=None):
+        fname = 'test_res'
+        if load is not None:
+            fname += f'_{load}'
+            if load == 'final':
+                self.load_model(best=False)
+            elif load == 'best':
+                self.load_model(best=True)
+            else:
+                warnings.warn(f'Invalid model-load: {load}')
+        print(f'Testing {load} model...')
+
         start_time = time.time()
         n_iters = int(np.ceil(n_episodes / self.args.num_processes))
         rr = dict(ep=[], ret=[])
@@ -415,7 +428,7 @@ class MetaLearner:
             rr['ret'].extend(returns_per_episode.cpu().numpy().reshape(-1))
 
         rr = pd.DataFrame(rr)
-        pd.to_pickle(rr, f'{self.logger.full_output_folder}/test_res.pkl')
+        pd.to_pickle(rr, f'{self.logger.full_output_folder}/{fname}.pkl')
         ret_mean = rr.ret.mean()
         ret_cvar = cvar(rr[rr.ep==n_eps-1].ret.values, self.args.alpha)
         print(f"Test results: mean={ret_mean},\tCVaR_{self.args.alpha:.2f}="
@@ -506,34 +519,8 @@ class MetaLearner:
 
         # --- save models ---
 
-        if self.is_saving_model():
-            save_path = os.path.join(self.logger.full_output_folder, 'models')
-            if not os.path.exists(save_path):
-                os.mkdir(save_path)
-
-            idx_labels = ['']
-            if self.args.save_intermediate_models:
-                idx_labels.append(int(self.iter_idx))
-
-            for idx_label in idx_labels:
-
-                torch.save(self.policy.actor_critic, os.path.join(save_path, f"policy{idx_label}.pt"))
-                torch.save(self.vae.encoder, os.path.join(save_path, f"encoder{idx_label}.pt"))
-                if self.vae.state_decoder is not None:
-                    torch.save(self.vae.state_decoder, os.path.join(save_path, f"state_decoder{idx_label}.pt"))
-                if self.vae.reward_decoder is not None:
-                    torch.save(self.vae.reward_decoder, os.path.join(save_path, f"reward_decoder{idx_label}.pt"))
-                if self.vae.task_decoder is not None:
-                    torch.save(self.vae.task_decoder, os.path.join(save_path, f"task_decoder{idx_label}.pt"))
-
-                # save normalisation params of envs
-                if self.args.norm_rew_for_policy:
-                    rew_rms = self.envs.venv.ret_rms
-                    utl.save_obj(rew_rms, save_path, f"env_rew_rms{idx_label}")
-                # TODO: grab from policy and save?
-                # if self.args.norm_obs_for_policy:
-                #     obs_rms = self.envs.venv.obs_rms
-                #     utl.save_obj(obs_rms, save_path, f"env_obs_rms{idx_label}")
+        if self.is_best_model():
+            self.save_model(best=True)
 
         # --- log some other things ---
 
@@ -577,18 +564,47 @@ class MetaLearner:
                         param_grad_mean = np.mean([param_list[i].grad.cpu().numpy().mean() for i in range(len(param_list))])
                         self.logger.add('gradients/{}'.format(name), param_grad_mean, self.iter_idx)
 
-    def is_saving_model(self):
-        if self.args.save_interval > 0:
-            # save every save_interval updates
-            return (self.iter_idx + 1) % self.args.save_interval == 0
-        else:
-            # save whenever evaluation gets better
-            is_evaluating = (self.iter_idx + 1) % self.args.eval_interval == 0
-            improved = self.last_eval_improved
-            return is_evaluating and improved
+    def is_best_model(self):
+        # save whenever evaluation gets better
+        is_evaluating = (self.iter_idx + 1) % self.args.eval_interval == 0
+        improved = self.last_eval_improved
+        return is_evaluating and improved
 
-    def load_model(self, idx_label=''):
-        save_path = os.path.join(self.logger.full_output_folder, 'models')
+    def save_model(self, best=True):
+        dir = 'best_models' if best else 'final_models'
+        save_path = os.path.join(self.logger.full_output_folder, dir)
+        if not os.path.exists(save_path):
+            os.mkdir(save_path)
+
+        idx_labels = ['']
+        if self.args.save_intermediate_models:
+            idx_labels.append(int(self.iter_idx))
+
+        for idx_label in idx_labels:
+
+            torch.save(self.policy.actor_critic, os.path.join(save_path, f"policy{idx_label}.pt"))
+            torch.save(self.vae.encoder, os.path.join(save_path, f"encoder{idx_label}.pt"))
+            if self.vae.state_decoder is not None:
+                torch.save(self.vae.state_decoder, os.path.join(save_path, f"state_decoder{idx_label}.pt"))
+            if self.vae.reward_decoder is not None:
+                torch.save(self.vae.reward_decoder, os.path.join(save_path, f"reward_decoder{idx_label}.pt"))
+            if self.vae.task_decoder is not None:
+                torch.save(self.vae.task_decoder, os.path.join(save_path, f"task_decoder{idx_label}.pt"))
+
+            # save normalisation params of envs
+            if self.args.norm_rew_for_policy:
+                rew_rms = self.envs.venv.ret_rms
+                utl.save_obj(rew_rms, save_path, f"env_rew_rms{idx_label}")
+            # TODO: grab from policy and save?
+            # if self.args.norm_obs_for_policy:
+            #     obs_rms = self.envs.venv.obs_rms
+            #     utl.save_obj(obs_rms, save_path, f"env_obs_rms{idx_label}")
+
+    def load_model(self, idx_label='', best=True):
+        if best:
+            print(f'Loading model from iteration {self.best_eval_iter:d}/{self.iter_idx:d}.')
+        dir = 'best_models' if best else 'final_models'
+        save_path = os.path.join(self.logger.full_output_folder, dir)
         self.policy.actor_critic = torch.load(os.path.join(save_path, f"policy{idx_label}.pt"))
         self.vae.encoder = torch.load(os.path.join(save_path, f"encoder{idx_label}.pt"))
         try:
