@@ -84,7 +84,8 @@ def qplot(data, y, x=None, hue=None, ax=None, **kwargs):
     return ax
 
 def smooth(y, n=10, deg=2):
-    if n%2 == 0: n += 1
+    n = min(n, len(y))
+    if n%2 == 0: n -= 1
     return signal.savgol_filter(y, n, deg)
 
 def labels(ax, xlab=None, ylab=None, title=None, fontsize=12):

@@ -230,19 +230,19 @@ def cem_analysis(env_name, task_dim, transformation=None, ylim=None,
 
     return ce, c1, c2, axs
 
-def show_validation_results(dda0, alpha):
+def show_validation_results(dda0, alpha, ci=None):
     axs = utils.Axes(2, 2, (7, 4), fontsize=15)
     a = 0
 
     sns.lineplot(data=dda0, x='iter', hue='method', y='ret',
-                 estimator='mean', ax=axs[a])
+                 estimator='mean', ax=axs[a], ci=ci)
     axs.labs(a, 'iteration', 'validation mean', 'first seed')
     a += 1
 
     # cvar over tasks
     cvar = get_cvar_fun(alpha)
     sns.lineplot(data=dda0, x='iter', hue='method', y='ret',
-                 estimator=cvar, ax=axs[a])
+                 estimator=cvar, ax=axs[a], ci=ci)
     axs.labs(a, 'iteration', f'validation CVaR$_{{{alpha}}}$',
              'first seed')
     a += 1
