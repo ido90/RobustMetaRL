@@ -209,23 +209,26 @@ def cem_analysis(env_name, task_dim, transformation=None, ylim=None,
             c1.iloc[:, -task_dim + i] = transformation(
                 c1.iloc[:, -task_dim + i])
 
-    axs = utils.Axes(2 * task_dim, 4, fontsize=15)
-    a = 0
+    axs = utils.Axes(2, 2, fontsize=15)
 
     for i in range(task_dim):
         tau = c1.iloc[:, -task_dim + i].values
+        axs[0].plot(c1.batch, tau, label=tasks[i])
+        axs[1].plot(c1.batch, utils.smooth(tau, min(smooth, len(c1))),
+                    label=tasks[i])
 
-        axs[a].plot(c1.batch, tau)
-        if ylim is not None:
-            axs[a].set_ylim(ylim)
-        axs.labs(a, 'CE iteration', f'E[{tasks[i]}]')
-        a += 1
+    if ylim is not None:
+        axs[0].set_ylim(ylim)
+        axs[1].set_ylim(ylim)
 
-        axs[a].plot(c1.batch, utils.smooth(tau, min(smooth, len(c1))))
-        if ylim is not None:
-            axs[a].set_ylim(ylim)
-        axs.labs(a, 'CE iteration', f'E[{tasks[i]}] (smoothed)')
-        a += 1
+    if task_dim > 1:
+        axs.labs(0, 'CE iteration', 'E[task]', title)
+        axs.labs(1, 'CE iteration', 'E[task] (smoothed)', title)
+        axs[0].legend(fontsize=13)
+        axs[1].legend(fontsize=13)
+    else:
+        axs.labs(0, 'CE iteration', f'E[{tasks[0]}]', title)
+        axs.labs(1, 'CE iteration', f'E[{tasks[0]}] (smoothed)', title)
 
     plt.tight_layout()
 
