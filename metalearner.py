@@ -200,6 +200,9 @@ class MetaLearner:
             self.policy_storage.latent_mean.append(latent_mean.clone())
             self.policy_storage.latent_logvar.append(latent_logvar.clone())
 
+            # alpha threshold: how much of the batch will be used for learning
+            alpha_thresh = self.get_tail_level()
+
             # rollout policies for a few steps
             for step in range(self.args.policy_num_steps):
 
@@ -238,7 +241,6 @@ class MetaLearner:
 
                 # before resetting, update the embedding and add to vae buffer
                 # (last state might include useful task info)
-                alpha_thresh = self.args.alpha if self.args.tail else None
                 if not (self.args.disable_decoder and self.args.disable_kl_term):
                     self.vae.rollout_storage.insert(prev_state.clone(),
                                                     action.detach().clone(),
@@ -254,6 +256,10 @@ class MetaLearner:
                 # reset environments that are done
                 done_indices = np.argwhere(done.cpu().flatten()).flatten()
                 if len(done_indices) > 0:
+                    if len(done_indices) < self.args.num_processes:
+                        warnings.warn(f'{len(done_indices)}/{self.args.num_processes} '
+                                      f'processes finished. All processes should finish '
+                                      f'synchronously, otherwise unexpected bugs are expected.')
                     if self.cem is not None:
                         for r in self.envs.get_return():
                             self.cem.update(r, save=True)
@@ -317,6 +323,16 @@ class MetaLearner:
 
         self.save_model(best=False)
         self.envs.close()
+
+    def get_tail_level(self):
+        if self.args.tail == 0:
+            return None
+        elif self.args.tail == 1:
+            return self.args.alpha
+        elif self.args.tail == 2:
+            progress = self.iter_idx / self.num_updates
+            return max(1 - (1-self.args.alpha) * progress / 0.8, self.args.alpha)
+        raise ValueError(self.args.tail)
 
     def encode_running_trajectory(self):
         """
@@ -483,7 +499,7 @@ class MetaLearner:
                 self.logger.add('return_std_per_iter/episode_{}'.format(k + 1), returns_std[k], self.iter_idx)
                 self.logger.add('return_std_per_frame/episode_{}'.format(k + 1), returns_std[k], self.frames)
 
-            eval_return = returns_cvar if (self.args.cem or self.args.tail) else returns_avg
+            eval_return = returns_cvar if (self.args.cem or self.args.tail>0) else returns_avg
             eval_return = eval_return.mean().item()
             if eval_return >= self.best_eval_return:
                 self.best_eval_return = eval_return

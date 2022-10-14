@@ -13,7 +13,7 @@ def get_args(rest_args):
     parser.add_argument('--env_name', default='HalfCheetahBody-v0', help='environment to train on')
 
     parser.add_argument('--alpha', type=float, default=0.05, help='CVaR risk level')
-    parser.add_argument('--tail', type=bool, default=False, help='only learn from tail')
+    parser.add_argument('--tail', type=int, default=0, help='learn from all batch / tail / scheduled-tail')
     parser.add_argument('--cem', type=bool, default=False, help='use CEM sampler')
     parser.add_argument('--oracle', type=bool, default=False, help='use oracle CEM sampler')
 
