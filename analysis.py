@@ -148,12 +148,17 @@ def show_task_distribution(dda0, rra0=None, tasks=None):
     plt.tight_layout()
     return axs
 
-def show_validation_vs_tasks(dda, xbins=11, fbins=7):
+def show_validation_vs_tasks(dda, tasks=None, xbins=11, fbins=7):
     print('Validation returns vs. task - over all seeds aggregated:')
     task_dim = get_task_dim(dda)
+    if tasks is None:
+        tasks = [f'task_{i:d}' for i in range(task_dim)]
+
     for i in range(task_dim):
         axs = utils.compare_quantiles(dda, f'task{i:d}', 'ret', 'method',
                                       'iter', xbins=xbins, fbins=fbins)
+        for j in range(len(axs)):
+            axs.labs(j, tasks[i], 'return')
     return axs
 
 def show_test_vs_tasks(rra, rra0, title=None, tasks=None, xbins=11):
