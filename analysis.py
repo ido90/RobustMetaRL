@@ -309,17 +309,28 @@ def summarize_test(rra0, rr0, alpha):
     plt.tight_layout()
     return axs
 
-def summarize_test_over_seeds(rrm, rrc, alpha, title=None):
+def summarize_test_over_seeds(rrm, rrc, alpha, title=None, barplot=False):
     n_seeds = len(pd.unique(rrm.seed))
 
     axs = utils.Axes(4, 4, fontsize=15)
     a = 0
 
-    sns.barplot(data=rrm, x='method', y='ret', ci=95, capsize=0.1, ax=axs[a])
+    meanprops = dict(marker='o', markerfacecolor='w',
+                     markeredgecolor='brown', markeredgewidth=2, markersize=10)
+
+    if barplot:
+        sns.barplot(data=rrm, x='method', y='ret', ci=95, capsize=0.1, ax=axs[a])
+    else:
+        sns.boxplot(data=rrm, x='method', y='ret', ax=axs[a], showmeans=True,
+                    meanprops=meanprops)
     axs.labs(a, 'method', 'mean return', title)
     a += 1
 
-    sns.barplot(data=rrc, x='method', y='ret', ci=95, capsize=0.1, ax=axs[a])
+    if barplot:
+        sns.barplot(data=rrc, x='method', y='ret', ci=95, capsize=0.1, ax=axs[a])
+    else:
+        sns.boxplot(data=rrc, x='method', y='ret', ax=axs[a], showmeans=True,
+                    meanprops=meanprops)
     axs.labs(a, 'method', f'$CVaR_{{{alpha}}}$ return', title)
     a += 1
 
