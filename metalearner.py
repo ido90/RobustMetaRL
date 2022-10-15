@@ -248,7 +248,7 @@ class MetaLearner:
                                                     rew_raw.clone(),
                                                     done.clone(),
                                                     task.clone() if task is not None else None,
-                                                    alpha_thresh=alpha_thresh)
+                                                    alpha_thresh=None)  # alpha_thresh on vae is empirically harmful
 
                 # add the obs before reset to the policy storage
                 self.policy_storage.next_state[step] = next_state.clone()
@@ -616,11 +616,13 @@ class MetaLearner:
             #     obs_rms = self.envs.venv.obs_rms
             #     utl.save_obj(obs_rms, save_path, f"env_obs_rms{idx_label}")
 
-    def load_model(self, idx_label='', best=True):
-        if best:
-            print(f'Loading model from iteration {self.best_eval_iter:d}/{self.iter_idx:d}.')
-        dir = 'best_models' if best else 'final_models'
-        save_path = os.path.join(self.logger.full_output_folder, dir)
+    def load_model(self, idx_label='', best=True, save_path=None):
+        if save_path is None:
+            if best:
+                print(f'Loading model from iteration {self.best_eval_iter:d}/{self.iter_idx:d}.')
+            dir = 'best_models' if best else 'final_models'
+            save_path = os.path.join(self.logger.full_output_folder, dir)
+
         self.policy.actor_critic = torch.load(os.path.join(save_path, f"policy{idx_label}.pt"))
         self.vae.encoder = torch.load(os.path.join(save_path, f"encoder{idx_label}.pt"))
         try:
