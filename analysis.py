@@ -170,7 +170,8 @@ def show_test_vs_tasks(rra, rra0, title=None, tasks=None, xbins=11):
     if tasks is None:
         tasks = [f'task_{i:d}' for i in range(task_dim)]
 
-    tit0 = f'First seed, {len(pd.unique(rra0.task0))} test tasks'
+    n_tasks = len(pd.unique(rra0[rra0.method==rra0.method.values[0]].task0))
+    tit0 = f'First seed, {n_tasks} test tasks'
     tit1 = f'Test tasks, {len(pd.unique(rra.seed))} seeds'
     if title:
         tit0 = f'{title}\n({tit0})'
@@ -258,7 +259,7 @@ def show_validation_results(dda0, alpha, ci=None):
     plt.tight_layout()
     return axs
 
-def show_validation_results_over_seeds(ddm, ddc, alpha, title=None):
+def show_validation_results_over_seeds(ddm, ddc, alpha, title=None, ci='sd'):
     axs = utils.Axes(2, 2, (7, 4), fontsize=15)
     a = 0
 
@@ -266,12 +267,12 @@ def show_validation_results_over_seeds(ddm, ddc, alpha, title=None):
     if title:
         tit = f'{title} ({tit})'
 
-    sns.lineplot(data=ddm, x='iter', hue='method', y='ret', ax=axs[a])
+    sns.lineplot(data=ddm, x='iter', hue='method', y='ret', ax=axs[a], ci=ci)
     axs.labs(a, 'iteration', 'validation mean', tit)
     a += 1
 
     # cvar over tasks, mean over seeds
-    sns.lineplot(data=ddc, x='iter', hue='method', y='ret', ax=axs[a])
+    sns.lineplot(data=ddc, x='iter', hue='method', y='ret', ax=axs[a], ci=ci)
     axs.labs(a, 'iteration', f'validation CVaR$_{{{alpha}}}$', tit)
     a += 1
 
