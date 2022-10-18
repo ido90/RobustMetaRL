@@ -18,14 +18,17 @@ class HalfCheetahBodyEnv(HalfCheetahEnv):
     def __init__(self, max_episode_steps=200, eval_mode=False):
         self.eval_mode = eval_mode
         self._max_episode_steps = max_episode_steps
-        self.task_dim = 3
+        self.task_dim = 4
         super(HalfCheetahBodyEnv, self).__init__()
         self.observation_space = Box(low=-np.inf, high=np.inf, shape=(20,),
                                      dtype=np.float64)
 
+        # save original cheetah properties (tasks are defined as ratios of these)
         self.original_mass_vec = self.model.body_mass.copy()  # 8 elements
         self.original_inertia_vec = self.model.body_inertia.copy()  # 8x3 elements
-        self.original_len = self.model.geom_size[2, 1].copy()
+        self.original_damp_vec = self.model.dof_damping.copy()  # 9 elements
+        self.original_len = self.model.geom_size[2, 1].copy()  # 1 element
+
         self.set_task(self.sample_task())
 
         self._time = 0
@@ -61,11 +64,14 @@ class HalfCheetahBodyEnv(HalfCheetahEnv):
     def set_task(self, task):
         self.task = task
 
-        self.unwrapped.model.geom_size[1:, 0] = 0.046 * task[0]
+        self.unwrapped.model.geom_size[1:, 0] = 0.046 * task[0]  # increase thickness with mass
         for i in range(len(self.model.body_mass)):
             self.model.body_mass[i] = task[0] * self.original_mass_vec[i]
+        for i in range(len(self.model.body_inertia)):
             self.model.body_inertia[i] = task[1] * self.original_inertia_vec[i]
-        self.model.geom_size[2, 1] = task[2] * self.original_len
+        for i in range(len(self.model.dof_damping)):
+            self.model.dof_damping[i] = task[2] * self.original_damp_vec[i]
+        self.model.geom_size[2, 1] = task[3] * self.original_len
 
         return task
 
