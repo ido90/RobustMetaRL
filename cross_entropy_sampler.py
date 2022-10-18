@@ -4,24 +4,24 @@ from scipy import stats
 import cross_entropy_method as cem
 
 
-def get_cem_sampler(env_name, seed, oracle=False):
+def get_cem_sampler(env_name, seed, oracle=False, alpha=0.05):
     if env_name == 'HalfCheetahVel-v0':
         if oracle:
             return CEM_HCV_Oracle(
-                0.5, ref_alpha=0.05, batch_size=8*16,
+                0.5, ref_alpha=alpha, batch_size=8*16,
                 n_orig_per_batch=0.2, soft_update=0.5, title=f'hc_vel_oracle_{seed:d}')
         else:
             return CEM_Beta(
-                0.5, ref_alpha=0.05, batch_size=8*16,
+                0.5, ref_alpha=alpha, batch_size=8*16,
                 n_orig_per_batch=0.2, soft_update=0.5, title=f'hc_vel_{seed:d}')
     elif env_name == 'HalfCheetahMass-v0':
         if oracle:
             return CEM_HCM_Oracle(
-                0.5, ref_alpha=0.05, batch_size=8*16,
+                0.5, ref_alpha=alpha, batch_size=8*16,
                 n_orig_per_batch=0.2, soft_update=0.5, title=f'hc_mass_oracle_{seed:d}')
         else:
             return LogBeta1D(
-                0.5, ref_alpha=0.05, batch_size=8*16,
+                0.5, ref_alpha=alpha, batch_size=8*16,
                 n_orig_per_batch=0.2, soft_update=0.5, title=f'hc_mass_{seed:d}')
     elif env_name == 'HalfCheetahBody-v0':
         if oracle:
@@ -29,8 +29,19 @@ def get_cem_sampler(env_name, seed, oracle=False):
                 f'No oracle-CEM implemented for HalfCheetahBody-v0.')
         else:
             return LogBeta(
-                0.5*np.ones(3), ref_alpha=0.05, batch_size=8*16,
+                0.5*np.ones(4), ref_alpha=alpha, batch_size=8*16,
                 n_orig_per_batch=0.2, soft_update=0.5, title=f'hc_body_{seed:d}')
+    elif env_name == 'HumanoidBody-v0':
+        if oracle:
+            raise NotImplementedError(
+                f'No oracle-CEM implemented for HumanoidBody-v0.')
+        else:
+            return LogBeta(
+                0.5*np.ones(2), ref_alpha=alpha, batch_size=8*16,
+                n_orig_per_batch=0.2, soft_update=0.5, title=f'hum_body_{seed:d}',
+                titles=('strength', 'mass'))
+                # titles=('butt_mass', 'foot_mass', 'hand_mass', 'butt_len', 'foot_len', 'hand_len'))
+            # (butt = either butt or pelvis)
     raise ValueError(env_name)
 
 
@@ -126,10 +137,12 @@ class CEM_HCM_Oracle(cem.CEM):
 class LogBeta(cem.CEM):
     '''x ~ 2**Beta, multi-dimensional'''
 
-    def __init__(self, *args, log_range=(-1, 1), eps=0.02, **kwargs):
+    def __init__(self, *args, log_range=(-1, 1), eps=0.02, titles=None, **kwargs):
         super(LogBeta, self).__init__(*args, **kwargs)
-        self.default_dist_titles = ['mass_mean', 'inertia_mean', 'head_size_mean']
-        self.default_samp_titles = ['mass', 'inertia', 'head_size']
+        if titles is None:
+            titles = ('mass', 'inertia', 'damping', 'head_size')
+        self.default_dist_titles = [f'{t}_mean' for t in titles]
+        self.default_samp_titles = [t for t in titles]
         self.log_range = log_range
         self.eps = eps
 

@@ -88,9 +88,11 @@ class MetaLearner:
         self.policy = self.initialise_policy()
 
         self.cem = None
-        if self.args.cem:
+        if self.args.cem > 0:
             print('\nCreating cem sampler.\n')
-            self.cem = cem.get_cem_sampler(args.env_name, args.seed, args.oracle)
+            self.cem = cem.get_cem_sampler(args.env_name, args.seed, args.oracle, args.alpha)
+            if self.args.cem == 2:
+                self.cem.ref_alpha = 1
 
         # record results
         self.rr = dict(iter=[], task_id=[], ep=[], ret=[])
@@ -202,6 +204,8 @@ class MetaLearner:
 
             # alpha threshold: how much of the batch will be used for learning
             alpha_thresh = self.get_tail_level()
+            if self.args.cem == 2:
+                self.cem.ref_alpha = self.get_soft_alpha()
 
             # rollout policies for a few steps
             for step in range(self.args.policy_num_steps):
@@ -330,9 +334,12 @@ class MetaLearner:
         elif self.args.tail == 1:
             return self.args.alpha
         elif self.args.tail == 2:
-            progress = self.iter_idx / self.num_updates
-            return max(1 - (1-self.args.alpha) * progress / 0.8, self.args.alpha)
+            return self.get_soft_alpha()
         raise ValueError(self.args.tail)
+
+    def get_soft_alpha(self):
+        progress = self.iter_idx / self.num_updates
+        return max(1 - (1 - self.args.alpha) * progress / 0.8, self.args.alpha)
 
     def encode_running_trajectory(self):
         """
@@ -499,7 +506,7 @@ class MetaLearner:
                 self.logger.add('return_std_per_iter/episode_{}'.format(k + 1), returns_std[k], self.iter_idx)
                 self.logger.add('return_std_per_frame/episode_{}'.format(k + 1), returns_std[k], self.frames)
 
-            eval_return = returns_cvar if (self.args.cem or self.args.tail>0) else returns_avg
+            eval_return = returns_cvar if (self.args.cem>0 or self.args.tail>0) else returns_avg
             eval_return = eval_return.mean().item()
             if eval_return >= self.best_eval_return:
                 self.best_eval_return = eval_return
