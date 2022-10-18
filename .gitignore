@@ -8,3 +8,4 @@ logs/
 scripts/
 docker/
 models/
+tmp_logs/
