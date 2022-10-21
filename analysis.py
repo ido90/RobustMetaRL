@@ -192,17 +192,17 @@ def show_test_vs_tasks(rra, rra0, title=None, tasks=None, xbins=11):
     return axs
 
 def cem_analysis(env_name, task_dim, transformation=None, ylim=None,
-                 smooth=20, seed=0, title=None, tasks=None):
+                 smooth=20, seed=0, title=None, tasks=None, soft=False):
     if tasks is None:
         tasks = [f'task_{i:d}' for i in range(task_dim)]
 
-    ce = cem.get_cem_sampler(env_name, seed)
+    ce = cem.get_cem_sampler(env_name, seed, cem_type=2 if soft else 1)
     try:
-        ce.load()
+        ce.load(f'logs/models/{ce.title}')
     except:
         # tmp exception for old naming format
         ce.title = ce.title[:-2]
-        ce.load()
+        ce.load(f'logs/models/{ce.title}')
 
     c1, c2 = ce.get_data()
     if transformation is not None:
@@ -326,12 +326,14 @@ def summarize_test_over_seeds(rrm, rrc, alpha, title=None, barplot=False):
 
     meanprops = dict(marker='o', markerfacecolor='w',
                      markeredgecolor='brown', markeredgewidth=2, markersize=10)
+    dotprops = dict(color='y', edgecolor='k', size=8, linewidth=1)
 
     if barplot:
         sns.barplot(data=rrm, x='method', y='ret', ci=95, capsize=0.1, ax=axs[a])
     else:
         sns.boxplot(data=rrm, x='method', y='ret', ax=axs[a], showmeans=True,
                     meanprops=meanprops)
+        sns.stripplot(data=rrm, x='method', y='ret', ax=axs[a], **dotprops)
     axs.labs(a, 'method', 'mean return', title)
     a += 1
 
@@ -340,6 +342,7 @@ def summarize_test_over_seeds(rrm, rrc, alpha, title=None, barplot=False):
     else:
         sns.boxplot(data=rrc, x='method', y='ret', ax=axs[a], showmeans=True,
                     meanprops=meanprops)
+        sns.stripplot(data=rrc, x='method', y='ret', ax=axs[a], **dotprops)
     axs.labs(a, 'method', f'$CVaR_{{{alpha}}}$ return', title)
     a += 1
 
