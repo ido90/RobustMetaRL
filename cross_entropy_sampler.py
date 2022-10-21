@@ -4,25 +4,29 @@ from scipy import stats
 import cross_entropy_method as cem
 
 
-def get_cem_sampler(env_name, seed, oracle=False, alpha=0.05):
+def get_cem_sampler(env_name, seed, oracle=False, alpha=0.05, cem_type=1):
+    sfx = f'{seed:d}'
+    if cem_type == 2:
+        sfx = f'soft_{sfx}'
+
     if env_name == 'HalfCheetahVel-v0':
         if oracle:
             return CEM_HCV_Oracle(
                 0.5, ref_alpha=alpha, batch_size=8*16,
-                n_orig_per_batch=0.2, soft_update=0.5, title=f'hc_vel_oracle_{seed:d}')
+                n_orig_per_batch=0.2, soft_update=0.5, title=f'hc_vel_oracle_{sfx}')
         else:
             return CEM_Beta(
                 0.5, ref_alpha=alpha, batch_size=8*16,
-                n_orig_per_batch=0.2, soft_update=0.5, title=f'hc_vel_{seed:d}')
+                n_orig_per_batch=0.2, soft_update=0.5, title=f'hc_vel_{sfx}')
     elif env_name == 'HalfCheetahMass-v0':
         if oracle:
             return CEM_HCM_Oracle(
                 0.5, ref_alpha=alpha, batch_size=8*16,
-                n_orig_per_batch=0.2, soft_update=0.5, title=f'hc_mass_oracle_{seed:d}')
+                n_orig_per_batch=0.2, soft_update=0.5, title=f'hc_mass_oracle_{sfx}')
         else:
             return LogBeta1D(
                 0.5, ref_alpha=alpha, batch_size=8*16,
-                n_orig_per_batch=0.2, soft_update=0.5, title=f'hc_mass_{seed:d}')
+                n_orig_per_batch=0.2, soft_update=0.5, title=f'hc_mass_{sfx}')
     elif env_name == 'HalfCheetahBody-v0':
         if oracle:
             raise NotImplementedError(
@@ -30,16 +34,17 @@ def get_cem_sampler(env_name, seed, oracle=False, alpha=0.05):
         else:
             return LogBeta(
                 0.5*np.ones(4), ref_alpha=alpha, batch_size=8*16,
-                n_orig_per_batch=0.2, soft_update=0.5, title=f'hc_body_{seed:d}')
+                n_orig_per_batch=0.2, soft_update=0.5, title=f'hc_body_{sfx}')
     elif env_name == 'HumanoidBody-v0':
         if oracle:
             raise NotImplementedError(
                 f'No oracle-CEM implemented for HumanoidBody-v0.')
         else:
             return LogBeta(
-                0.5*np.ones(2), ref_alpha=alpha, batch_size=8*16,
-                n_orig_per_batch=0.2, soft_update=0.5, title=f'hum_body_{seed:d}',
-                titles=('strength', 'mass'))
+                0.5*np.ones(3), ref_alpha=alpha, batch_size=8*16,
+                n_orig_per_batch=0.2, soft_update=0.5, title=f'hum_body_{sfx}',
+                titles=('butt_mass', 'foot_mass', 'hand_mass'))
+                # titles=('strength', 'mass'))
                 # titles=('butt_mass', 'foot_mass', 'hand_mass', 'butt_len', 'foot_len', 'hand_len'))
             # (butt = either butt or pelvis)
     raise ValueError(env_name)

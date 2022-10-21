@@ -90,7 +90,7 @@ class MetaLearner:
         self.cem = None
         if self.args.cem > 0:
             print('\nCreating cem sampler.\n')
-            self.cem = cem.get_cem_sampler(args.env_name, args.seed, args.oracle, args.alpha)
+            self.cem = cem.get_cem_sampler(args.env_name, args.seed, args.oracle, args.alpha, args.cem)
             if self.args.cem == 2:
                 self.cem.ref_alpha = 1
 
@@ -266,7 +266,7 @@ class MetaLearner:
                                       f'synchronously, otherwise unexpected bugs are expected.')
                     if self.cem is not None:
                         for r in self.envs.get_return():
-                            self.cem.update(r, save=True)
+                            self.cem.update(r, save=f'logs/models/{self.cem.title}')
                     next_state, belief, task = utl.reset_env(self.envs, self.args,
                                                              indices=done_indices, state=next_state,
                                                              cem=self.cem)
