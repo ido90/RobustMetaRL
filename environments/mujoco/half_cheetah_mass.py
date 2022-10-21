@@ -39,7 +39,10 @@ class HalfCheetahMassEnv(HalfCheetahEnv):
         ctrl_cost = 0.5 * 1e-1 * np.sum(np.square(action))
 
         observation = self._get_obs()
-        reward = forward_reward - ctrl_cost
+        # this value is in [-0.1,0.1] when the cheetah is straight, and in [-0.6,-0.4] when it's upside-down.
+        #  we penalize the cheetah being upside down.
+        reward_height = observation[0]
+        reward = forward_reward - ctrl_cost + reward_height
         done = False
         infos = dict(reward_forward=forward_reward,
                      reward_ctrl=-ctrl_cost,
