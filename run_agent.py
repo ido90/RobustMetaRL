@@ -1,5 +1,5 @@
 import argparse
-import os
+import os, time
 import warnings
 import matplotlib.pyplot as plt
 import numpy as np
@@ -17,12 +17,9 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 
-def run_agent(learner, tasks=None, num_episodes=None, gif='demo'):
+def run_agent(learner, tasks=None, num_episodes=1, gif='demo', dur=1, sleep=0.05):
     # GIF args
-    dur = 0.01
-    width = 250
-    height = 200
-    gif += '.gif'
+    dur = 0.01 * dur
 
     ret_rms = learner.envs.venv.ret_rms if learner.args.norm_rew_for_policy else None
     args = learner.args
@@ -77,6 +74,7 @@ def run_agent(learner, tasks=None, num_episodes=None, gif='demo'):
     else:
         latent_sample = latent_mean = latent_logvar = hidden_state = None
 
+    states = []
     for episode_idx in range(num_episodes):
 
         ep_obs = []
@@ -96,6 +94,7 @@ def run_agent(learner, tasks=None, num_episodes=None, gif='demo'):
 
             # observe reward and next obs
             [state, belief, task], (rew_raw, rew_normalised), done, infos = utl.env_step(envs, action, args)
+            states.append(state.reshape(-1).cpu().numpy())
             done_mdp = [info['done_mdp'] for info in infos]
 
             if encoder is not None:
@@ -120,25 +119,29 @@ def run_agent(learner, tasks=None, num_episodes=None, gif='demo'):
             # update GIF
             if gif:
                 env = envs.venv.unwrapped.envs[0].unwrapped
-                # TODO https://github.com/openai/mujoco-py/issues/187
-                obs = env.render(mode='rgb_array') #, width=width, height=height)
-                print(obs.shape)
-                # assert obs.shape == (height, width, 3), obs.shape
+                obs = env.render(mode='rgb_array')  # , width=width, height=height)
                 ep_obs.append(obs)
+            elif sleep:
+                env = envs.venv.unwrapped.envs[0].unwrapped
+                env.render()
+                time.sleep(sleep)
 
         # save GIF
         if gif:
             fname = gif
             if num_episodes > 1:
                 fname += f'_{episode_idx}'
-            fname += '.gif'
-            with imageio.get_writer(fname, mode='I', duration=dur) as writer:
+            fname = f'logs/gifs/{fname}'
+            print(f'Saving {fname}')
+            with imageio.get_writer(f'{fname}.gif', mode='I', duration=dur) as writer:
                 for obs_np in ep_obs:
                     writer.append_data(obs_np)
+            # also save trajectory of states
+            np.save(f'{fname}.npy', np.stack(states))
 
     returns_per_episode = returns_per_episode[:, :num_episodes]
     print('Returns:')
-    print(returns_per_episode)
+    print(returns_per_episode.cpu().numpy())
 
     envs.close()
 
@@ -173,6 +176,8 @@ def main():
     elif args.tail == 2:
         method = 'schedbad'
 
+    save_gif = args.save_interval > 0
+
     # set args for demo run
     args.deterministic_execution = True
     args.num_processes = 1
@@ -202,11 +207,14 @@ def main():
         base_path = analysis.get_base_path(args.env_name)
         dir = analysis.get_dir(base_path, short_name, method, args.seed)
         pth = f'{base_path}/{dir}/best_models'
+        print('\nLoading model from:', pth)
         learner = MetaLearner(args)
         learner.load_model(save_path=pth)
-        run_agent(learner, gif=f'{short_name}_{method}_{args.seed}')
-        # learner.test(load='final')
-        # learner.test(load='best')
+        run_agent(
+            learner,
+            gif=f'{short_name}_{method}_{args.seed}' if save_gif else None,
+            dur=1 if short_name.startswith('hum') else 5
+        )
 
 
 if __name__ == '__main__':
