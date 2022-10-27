@@ -10,7 +10,7 @@ from utils import helpers as utl
 import analysis
 from config.mujoco import \
     args_cheetah_vel_varibad, args_cheetah_mass_varibad, args_cheetah_body_varibad, \
-    args_humanoid_body_varibad
+    args_humanoid_mass_varibad, args_humanoid_body_varibad
 from metalearner import MetaLearner
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -158,19 +158,24 @@ def main():
         args = args_cheetah_mass_varibad.get_args(rest_args)
     elif env == 'cheetah_body_varibad':
         args = args_cheetah_body_varibad.get_args(rest_args)
+    elif env == 'humanoid_mass_varibad':
+        args = args_humanoid_mass_varibad.get_args(rest_args)
     elif env == 'humanoid_body_varibad':
         args = args_humanoid_body_varibad.get_args(rest_args)
     else:
         raise Exception("Invalid Environment")
 
     short_name = dict(cheetah_vel_varibad='hcv', cheetah_mass_varibad='hcm',
-                      cheetah_body_varibad='hcb', humanoid_body_varibad='humb')[env]
+                      cheetah_body_varibad='hcb', humanoid_body_varibad='humb',
+                      humanoid_mass_varibad='humm')[env]
     method = 'varibad'
     if args.cem:
         if args.oracle:
             method = 'oracbad'
-        else:
+        elif args.cem == 1:
             method = 'cembad'
+        else:
+            method = 'cesbad'
     elif args.tail == 1:
         method = 'cvarbad'
     elif args.tail == 2:
@@ -206,7 +211,7 @@ def main():
         args.action_space = None
         base_path = analysis.get_base_path(args.env_name)
         dir = analysis.get_dir(base_path, short_name, method, args.seed)
-        pth = f'{base_path}/{dir}/best_models'
+        pth = f'{base_path}/{dir}/final_models'
         print('\nLoading model from:', pth)
         learner = MetaLearner(args)
         learner.load_model(save_path=pth)
