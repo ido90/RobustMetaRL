@@ -65,7 +65,7 @@ class HalfCheetahMassEnv(HalfCheetahEnv):
         self.task = task
         for i in range(len(self.model.body_mass)):
             self.model.body_mass[i] = task * self.original_mass_vec[i]
-        self.unwrapped.model.geom_size[1:, 0] = 0.046 * task
+        self.model.geom_size[1:, 0] = 0.046 * task
         return task
 
     def get_task(self):

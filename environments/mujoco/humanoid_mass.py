@@ -9,19 +9,13 @@ from gym import spaces
 import random
 
 
-# def mass_center(model, sim):
-#     mass = np.expand_dims(model.body_mass, 1)
-#     xpos = sim.data.xipos
-#     return (np.sum(mass * xpos, 0) / np.sum(mass))
-
-
-class HumanoidBodyEnv(HumanoidEnv):
+class HumanoidMassEnv(HumanoidEnv):
 
     def __init__(self, max_episode_steps=200, eval_mode=False):
-        self.task_dim = 4
+        self.task_dim = 1
         self._max_episode_steps = max_episode_steps
         self.action_scale = 1  # Mujoco environment initialization takes a step,
-        super(HumanoidBodyEnv, self).__init__()
+        super(HumanoidMassEnv, self).__init__()
 
         # Override action space to make it range from  (-1, 1)
         assert (self.action_space.low == -self.action_space.high).all()
@@ -30,11 +24,9 @@ class HumanoidBodyEnv(HumanoidEnv):
                                        shape=self.action_space.shape)  # Overriding original action_space which is (-0.4, 0.4, shape = (17, ))
 
         # save original cheetah properties (tasks are defined as ratios of these)
+        # self.original_acc = self.model.actuator_acc0.copy()
         self.original_mass = self.model.body_mass.copy()
-        self.original_width = self.model.geom_size.copy()
-        self.original_inertia = self.model.body_inertia.copy()
-        self.original_damp = self.model.dof_damping.copy()
-        self.original_len = self.model.geom_size[2, :].copy()
+        self.original_size = self.model.geom_size.copy()
 
         self.set_task(self.sample_task())
 
@@ -57,31 +49,6 @@ class HumanoidBodyEnv(HumanoidEnv):
             self._return = 0
         return observation, reward, done, infos
 
-    # def step(self, action):
-    #     pos_before = np.copy(mass_center(self.model, self.sim)[:2])
-    #
-    #     rescaled_action = action * self.action_scale  # Scale the action from (-1, 1) to original.
-    #     self.do_simulation(rescaled_action, self.frame_skip)
-    #     pos_after = mass_center(self.model, self.sim)[:2]
-    #
-    #     alive_bonus = 5.0
-    #     data = self.sim.data
-    #     goal_direction = (np.cos(self._goal), np.sin(self._goal))
-    #     lin_vel_cost = 0.25 * np.sum(goal_direction * (pos_after - pos_before)) / self.model.opt.timestep
-    #     quad_ctrl_cost = 0.1 * np.square(data.ctrl).sum()
-    #     quad_impact_cost = .5e-6 * np.square(data.cfrc_ext).sum()
-    #     quad_impact_cost = min(quad_impact_cost, 10)
-    #     reward = lin_vel_cost - quad_ctrl_cost - quad_impact_cost + alive_bonus
-    #     qpos = self.sim.data.qpos
-    #
-    #     done = bool((qpos[2] < 1.0) or (qpos[2] > 2.0))
-    #     # done = False
-    #
-    #     return self._get_obs(), reward, done, dict(reward_linvel=lin_vel_cost,
-    #                                                reward_quadctrl=-quad_ctrl_cost,
-    #                                                reward_alive=alive_bonus,
-    #                                                reward_impact=-quad_impact_cost)
-
     def _get_obs(self):
         data = self.sim.data
         return np.concatenate([data.qpos.flat[2:],
@@ -97,15 +64,17 @@ class HumanoidBodyEnv(HumanoidEnv):
     def set_task(self, task):
         self.task = task
 
-        self.model.geom_size[1, 0] = task[0] * self.original_width[1, 0]
-        self.model.geom_size[3:, 0] = task[0] * self.original_width[3:, 0]
         for i in range(len(self.model.body_mass)):
-            self.model.body_mass[i] = task[0] * self.original_mass[i]
-        for i in range(len(self.model.body_inertia)):
-            self.model.body_inertia[i] = task[1] * self.original_inertia[i]
-        for i in range(len(self.model.dof_damping)):
-            self.model.dof_damping[i] = task[2] * self.original_damp[i]
-        self.model.geom_size[2, :] = task[3] * self.original_len
+            self.model.body_mass[i] = task * self.original_mass[i]
+        self.model.geom_size[1:, 0] = task * self.original_size[1:, 0]
+
+        # # butt, feet, hands
+        # for i_task, (i_size, i_mass) in enumerate(zip(([5], [8,11], [14,17]), ([3], [6,9], [11,13]))):
+        #     # mass + width
+        #     for i in i_mass:
+        #         self.model.body_mass[i] = task[i_task] * self.original_mass[i]
+        #     for i in i_size:
+        #         self.model.geom_size[i, 0] = task[i_task] * self.original_size[i, 0]
 
         return task
 

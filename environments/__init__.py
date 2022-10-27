@@ -70,6 +70,14 @@ register(
 )
 
 register(
+    'HumanoidMass-v0',
+    entry_point='environments.wrappers:mujoco_wrapper',
+    kwargs={'entry_point': 'environments.mujoco.humanoid_mass:HumanoidMassEnv',
+            'max_episode_steps': 200},
+    max_episode_steps=200
+)
+
+register(
     'HumanoidBody-v0',
     entry_point='environments.wrappers:mujoco_wrapper',
     kwargs={'entry_point': 'environments.mujoco.humanoid_body:HumanoidBodyEnv',
