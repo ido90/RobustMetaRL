@@ -9,8 +9,8 @@ import general_utils as utils
 TRAIN_FILE = 'res'
 TEST_FILE = 'test_res'
 
-def get_base_path(env_name):
-    return f'logs/logs_{env_name}'
+def get_base_path(env_name, base='logs'):
+    return f'{base}/logs_{env_name}'
 
 def get_dir(base_path, env_short, method, seed):
     return sorted([s for s in os.listdir(base_path)
@@ -88,10 +88,10 @@ def load_train_data(env_name, env_short, methods, seeds, alpha,
 
     return dd, dda, ddm, ddc, dd0, dda0, task_dim
 
-def load_test_data(env_name, env_short, methods, seeds, alpha, model='best'):
+def load_test_data(env_name, env_short, methods, seeds, alpha,
+                   model='best', fname=TEST_FILE):
     base_path = get_base_path(env_name)
     cvar = get_cvar_fun(alpha)
-    fname = TEST_FILE
     if model is not None:
         fname += f'_{model}'
 

@@ -181,9 +181,9 @@ def main():
     elif args.tail == 2:
         method = 'schedbad'
 
-    task = None
+    tasks = None
     if isinstance(args.alpha, (tuple, list)):
-        task = args.alpha
+        tasks = [args.alpha]
 
     save_gif = args.save_interval > 0
 
@@ -221,7 +221,7 @@ def main():
         learner.load_model(save_path=pth)
         run_agent(
             learner,
-            tasks=[task],
+            tasks=tasks,
             gif=f'{short_name}_{method}_{args.seed}' if save_gif else None,
             dur=1 if short_name.startswith('hum') else 5
         )

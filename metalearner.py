@@ -417,7 +417,7 @@ class MetaLearner:
                 self.load_model(best=True)
             else:
                 warnings.warn(f'Invalid model-load: {load}')
-        print(f'Testing {load} model...')
+            print(f'Testing {load} model...')
 
         start_time = time.time()
         n_iters = int(np.ceil(n_episodes / self.args.num_processes))
@@ -443,6 +443,8 @@ class MetaLearner:
             for i in range(self.args.task_dim):
                 if self.args.task_dim == 1:
                     task_i = tasks
+                elif n_tasks == 1:
+                    task_i = tasks[i]
                 else:
                     task_i = [tsk[i] for tsk in tasks]
                 rr[f'task{i:d}'].extend(list(np.repeat(task_i, n_eps)))
