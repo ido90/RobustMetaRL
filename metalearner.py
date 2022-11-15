@@ -408,8 +408,7 @@ class MetaLearner:
 
         return policy_train_stats
 
-    def test(self, n_episodes=1000, load=None):
-        fname = 'test_res'
+    def test(self, n_episodes=1000, load=None, fname='test_res'):
         if load is not None:
             fname += f'_{load}'
             if load == 'final':

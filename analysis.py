@@ -206,8 +206,11 @@ def cem_analysis(env_name, task_dim, transformation=None, ylim=None,
 
     c1, c2 = ce.get_data()
     if transformation is not None:
+        trns = transformation
         for i in range(task_dim):
-            c1.iloc[:, -task_dim + i] = transformation(
+            if isinstance(transformation, (tuple, list)):
+                trns = transformation[i]
+            c1.iloc[:, -task_dim + i] = trns(
                 c1.iloc[:, -task_dim + i])
 
     axs = utils.Axes(2, 2, fontsize=15)
