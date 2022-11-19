@@ -252,7 +252,12 @@ def qgroups(x, nbins=5, apply_labs=True):
     qs[-1] += 1
     g = [int(np.sum(xx>=qs))-1 for xx in x]
     qs[-1] -= 1
-    v = [f'{qs[gg]:.1f}-{qs[gg+1]:.1f}' for gg in g] if apply_labs else g
+    v = g
+    if apply_labs:
+        for ndigits in range(4):
+            v = [f'{qs[gg]:.{ndigits:d}f}-{qs[gg+1]:.{ndigits:d}f}' for gg in g]
+            if len(pd.unique(v)) == nbins-1:
+                break
     sorted_v = [vv for _,vv in sorted(zip(g,v))]
     ids = np.unique(sorted_v, return_index=True)[1]
     v_labs = [sorted_v[i] for i in sorted(ids)]

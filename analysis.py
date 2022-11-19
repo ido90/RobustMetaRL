@@ -89,8 +89,8 @@ def load_train_data(env_name, env_short, methods, seeds, alpha,
     return dd, dda, ddm, ddc, dd0, dda0, task_dim
 
 def load_test_data(env_name, env_short, methods, seeds, alpha,
-                   model='best', fname=TEST_FILE):
-    base_path = get_base_path(env_name)
+                   model='best', fname=TEST_FILE, base_path='logs'):
+    base_path = get_base_path(env_name, base_path)
     cvar = get_cvar_fun(alpha)
     if model is not None:
         fname += f'_{model}'
