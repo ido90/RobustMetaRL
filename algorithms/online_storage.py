@@ -153,7 +153,7 @@ class OnlineStorage(object):
         if alpha_thresh is not None and self.step == 0:
             # mark all episodes as bad except for bottom alpha returns
             returns = self.rewards_raw.sum(dim=0)[:, 0]
-            q = cvar(returns, alpha_thresh)
+            q = torch.quantile(returns, alpha_thresh, dim=0).item()
             high_rets = returns > q
             self.bad_masks[:, high_rets, :] = 0
 
