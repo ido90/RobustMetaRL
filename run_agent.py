@@ -8,6 +8,7 @@ import imageio
 from environments.parallel_envs import make_vec_envs
 from utils import helpers as utl
 import analysis
+from config import args_khazad_dum_varibad
 from config.mujoco import \
     args_cheetah_vel_varibad, args_cheetah_mass_varibad, args_cheetah_body_varibad, \
     args_humanoid_mass_varibad, args_humanoid_body_varibad
@@ -117,14 +118,15 @@ def run_agent(learner, tasks=None, num_episodes=1, gif='demo', dur=1, sleep=0.05
                 state, belief, task = utl.reset_env(envs, args, indices=done_indices, state=state)
 
             # update GIF
-            if gif:
-                env = envs.venv.unwrapped.envs[0].unwrapped
-                obs = env.render(mode='rgb_array')  # , width=width, height=height)
-                ep_obs.append(obs)
-            elif sleep:
-                env = envs.venv.unwrapped.envs[0].unwrapped
-                env.render()
-                time.sleep(sleep)
+            if 'Khazad' not in env_name:
+                if gif:
+                    env = envs.venv.unwrapped.envs[0].unwrapped
+                    obs = env.render(mode='rgb_array')  # , width=width, height=height)
+                    ep_obs.append(obs)
+                elif sleep:
+                    env = envs.venv.unwrapped.envs[0].unwrapped
+                    env.render()
+                    time.sleep(sleep)
 
         # save GIF
         if gif:
@@ -133,11 +135,18 @@ def run_agent(learner, tasks=None, num_episodes=1, gif='demo', dur=1, sleep=0.05
                 fname += f'_{episode_idx}'
             fname = f'logs/gifs/{fname}'
             print(f'Saving {fname}')
-            with imageio.get_writer(f'{fname}.gif', mode='I', duration=dur) as writer:
-                for obs_np in ep_obs:
-                    writer.append_data(obs_np)
-            # also save trajectory of states
-            np.save(f'{fname}.npy', np.stack(states))
+
+            if 'Khazad' in env_name:
+                env = envs.venv.unwrapped.envs[0].unwrapped
+                env.show_state()
+                time.sleep(0.5)
+                plt.savefig(f'{fname}.png', bbox_inches='tight')
+            else:
+                with imageio.get_writer(f'{fname}.gif', mode='I', duration=dur) as writer:
+                    for obs_np in ep_obs:
+                        writer.append_data(obs_np)
+                # also save trajectory of states
+                np.save(f'{fname}.npy', np.stack(states))
 
     returns_per_episode = returns_per_episode[:, :num_episodes]
     print('Returns:')
@@ -162,12 +171,14 @@ def main():
         args = args_humanoid_mass_varibad.get_args(rest_args)
     elif env == 'humanoid_body_varibad':
         args = args_humanoid_body_varibad.get_args(rest_args)
+    elif env == 'khazad_dum_varibad':
+        args = args_khazad_dum_varibad.get_args(rest_args)
     else:
         raise Exception("Invalid Environment")
 
     short_name = dict(cheetah_vel_varibad='hcv', cheetah_mass_varibad='hcm',
                       cheetah_body_varibad='hcb', humanoid_body_varibad='humb',
-                      humanoid_mass_varibad='humm')[env]
+                      humanoid_mass_varibad='humm', khazad_dum_varibad='kd')[env]
     method = 'varibad'
     if args.cem:
         if args.oracle:
@@ -215,7 +226,8 @@ def main():
         args.action_space = None
         base_path = analysis.get_base_path(args.env_name)
         dir = analysis.get_dir(base_path, short_name, method, args.seed)
-        pth = f'{base_path}/{dir}/final_models'
+        # pth = f'{base_path}/{dir}/final_models'
+        pth = f'{base_path}/{dir}/best_models'
         print('\nLoading model from:', pth)
         learner = MetaLearner(args)
         learner.load_model(save_path=pth)

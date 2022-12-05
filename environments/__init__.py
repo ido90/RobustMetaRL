@@ -132,3 +132,10 @@ register(
     entry_point='environments.navigation.gridworld:GridNavi',
     kwargs={'num_cells': 5, 'num_steps': 15},
 )
+
+register(
+    'KhazadDum-v0',
+    entry_point='environments.navigation.KhazadDum:KhazadDum',
+    kwargs={'exp_bonus':0},
+    max_episode_steps=48,
+)

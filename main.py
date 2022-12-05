@@ -9,6 +9,7 @@ import numpy as np
 import torch
 
 # get configs
+from config import args_khazad_dum_varibad
 from config.gridworld import \
     args_grid_belief_oracle, args_grid_rl2, args_grid_varibad
 from config.pointrobot import \
@@ -54,6 +55,9 @@ def main():
         args = args_pointrobot_rl2.get_args(rest_args)
     elif env == 'pointrobot_humplik':
         args = args_pointrobot_humplik.get_args(rest_args)
+
+    elif env == 'khazad_dum_varibad':
+        args = args_khazad_dum_varibad.get_args(rest_args)
 
     # --- MUJOCO ---
 
