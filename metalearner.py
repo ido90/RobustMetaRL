@@ -668,7 +668,7 @@ class MetaLearner:
             save_path = os.path.join(self.logger.full_output_folder, dir)
 
             if best and not os.path.exists(save_path):
-                print(f'Compatibility issue: best_{best}_models unavailable, using just best_models.')
+                print(f'Compatibility issue: best_{best}_models unavailable, using best_models instead.')
                 save_path = os.path.join(self.logger.full_output_folder, 'best_models')
 
         self.policy.actor_critic = torch.load(os.path.join(save_path, f"policy{idx_label}.pt"))

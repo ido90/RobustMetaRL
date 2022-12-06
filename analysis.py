@@ -91,10 +91,12 @@ def load_train_data(env_name, env_short, methods, seeds, alpha,
     return dd, dda, ddm, ddc, dd0, dda0, task_dim
 
 def load_test_data(env_name, env_short, methods, seeds, alpha,
-                   model='best', fname=TEST_FILE, base_path='logs'):
+                   model='best_cvar', fname=TEST_FILE, base_path='logs'):
     base_path = get_base_path(env_name, base_path)
     cvar = get_cvar_fun(alpha)
     if model is not None:
+        if model == 'best':
+            model = 'best_cvar'
         fname += f'_{model}'
 
     rr = pd.DataFrame()
@@ -102,7 +104,11 @@ def load_test_data(env_name, env_short, methods, seeds, alpha,
     for method in methods:
         for seed in seeds:
             e = get_dir(base_path, env_short, method, seed)
-            d = pd.read_pickle(f'{base_path}/{e}/{fname}.pkl')
+            try:
+                d = pd.read_pickle(f'{base_path}/{e}/{fname}.pkl')
+            except:
+                print(f'Cannot load {fname}, loading {fname[:-5]} instead.')
+                d = pd.read_pickle(f'{base_path}/{e}/{fname[:-5]}.pkl')
             d['method'] = method
             d['seed'] = seed
             rr = pd.concat((rr, d))
