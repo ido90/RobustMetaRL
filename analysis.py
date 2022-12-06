@@ -22,12 +22,14 @@ def get_task_dim(dd):
 
 # aggregate over episodes within task
 def agg_eps(d):
+    d = d.copy()
     d['ret'] = d.ret.mean()
     d.drop('ep', axis=1, inplace=True)
     return d.head(1)
 
 # aggregate over tasks within seed
 def agg_tasks(d, fun):
+    d = d.copy()
     d['ret'] = fun(d.ret.values)
     for col in d.columns:
         if col.startswith('task') and col != 'task_id':
