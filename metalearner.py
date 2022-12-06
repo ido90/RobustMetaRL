@@ -98,9 +98,12 @@ class MetaLearner:
         self.rr = dict(iter=[], task_id=[], ep=[], ret=[])
         for i in range(self.args.task_dim):
             self.rr[f'task{i:d}'] = []
-        self.best_eval_return = -np.inf
-        self.best_eval_iter = -1
-        self.last_eval_improved = False
+        self.best_mean_return = -np.inf
+        self.best_mean_iter = -1
+        self.best_cvar_return = -np.inf
+        self.best_cvar_iter = -1
+        self.last_mean_improved = False
+        self.last_cvar_improved = False
 
     def initialise_policy_storage(self):
         return OnlineStorage(args=self.args,
@@ -325,7 +328,7 @@ class MetaLearner:
             # clean up after update
             self.policy_storage.after_update()
 
-        self.save_model(best=False)
+        self.save_model(best='')
         self.envs.close()
 
     def get_tail_level(self):
@@ -411,12 +414,7 @@ class MetaLearner:
     def test(self, n_tasks=1000, load=None, fname='test_res'):
         if load is not None:
             fname += f'_{load}'
-            if load == 'final':
-                self.load_model(best=False)
-            elif load == 'best':
-                self.load_model(best=True)
-            else:
-                warnings.warn(f'Invalid model-load: {load}')
+            self.load_model(best=load)
             print(f'Testing {load} model...')
 
         start_time = time.time()
@@ -524,14 +522,23 @@ class MetaLearner:
                 self.logger.add('return_std_per_iter/episode_{}'.format(k + 1), returns_std[k], self.iter_idx)
                 self.logger.add('return_std_per_frame/episode_{}'.format(k + 1), returns_std[k], self.frames)
 
-            eval_return = returns_cvar if (self.args.cem>0 or self.args.tail>0) else returns_avg
-            eval_return = eval_return.mean().item()
-            if eval_return >= self.best_eval_return:
-                self.best_eval_return = eval_return
-                self.best_eval_iter = self.iter_idx
-                self.last_eval_improved = True
+            mean_return = returns_cvar if (self.args.cem>0 or self.args.tail>0) else returns_avg
+            mean_return = mean_return.mean().item()
+            if mean_return >= self.best_mean_return:
+                self.best_mean_return = mean_return
+                self.best_mean_iter = self.iter_idx
+                self.last_mean_improved = True
             else:
-                self.last_eval_improved = False
+                self.last_mean_improved = False
+
+            cvar_return = returns_cvar if (self.args.cem>0 or self.args.tail>0) else returns_avg
+            cvar_return = cvar_return.mean().item()
+            if cvar_return >= self.best_cvar_return:
+                self.best_cvar_return = cvar_return
+                self.best_cvar_iter = self.iter_idx
+                self.last_cvar_improved = True
+            else:
+                self.last_cvar_improved = False
 
             print(f"Updates {self.iter_idx}, "
                   f"Frames {self.frames}, "
@@ -560,8 +567,10 @@ class MetaLearner:
 
         # --- save models ---
 
-        if self.is_best_model():
-            self.save_model(best=True)
+        if self.is_best_model('mean'):
+            self.save_model(best='mean')
+        if self.is_best_model('cvar'):
+            self.save_model(best='cvar')
 
         # --- log some other things ---
 
@@ -605,14 +614,20 @@ class MetaLearner:
                         param_grad_mean = np.mean([param_list[i].grad.cpu().numpy().mean() for i in range(len(param_list))])
                         self.logger.add('gradients/{}'.format(name), param_grad_mean, self.iter_idx)
 
-    def is_best_model(self):
+    def is_best_model(self, mode='mean'):
         # save whenever evaluation gets better
-        is_evaluating = (self.iter_idx + 1) % self.args.eval_interval == 0
-        improved = self.last_eval_improved
-        return is_evaluating and improved
+        if mode == 'mean':
+            is_evaluating = (self.iter_idx + 1) % self.args.eval_interval == 0
+            improved = self.last_mean_improved
+            return is_evaluating and improved
+        elif mode == 'cvar':
+            is_evaluating = (self.iter_idx + 1) % self.args.eval_interval == 0
+            improved = self.last_cvar_improved
+            return is_evaluating and improved
+        raise ValueError(mode)
 
-    def save_model(self, best=True):
-        dir = 'best_models' if best else 'final_models'
+    def save_model(self, best=''):
+        dir = f'best_{best}_models' if best else 'final_models'
         save_path = os.path.join(self.logger.full_output_folder, dir)
         if not os.path.exists(save_path):
             os.mkdir(save_path)
@@ -641,12 +656,20 @@ class MetaLearner:
             #     obs_rms = self.envs.venv.obs_rms
             #     utl.save_obj(obs_rms, save_path, f"env_obs_rms{idx_label}")
 
-    def load_model(self, idx_label='', best=True, save_path=None):
+    def load_model(self, idx_label='', best='', save_path=None):
         if save_path is None:
-            if best:
-                print(f'Loading model from iteration {self.best_eval_iter:d}/{self.iter_idx:d}.')
-            dir = 'best_models' if best else 'final_models'
+            if best == 'mean':
+                print(f'Loading model from iteration {self.best_mean_iter:d}/{self.iter_idx:d}.')
+            elif best == 'cvar':
+                print(f'Loading model from iteration {self.best_cvar_iter:d}/{self.iter_idx:d}.')
+            elif best != 'final':
+                warnings.warn(f'Unexpected model to load: {best}')
+            dir = f'best_{best}_models' if best else 'final_models'
             save_path = os.path.join(self.logger.full_output_folder, dir)
+
+            if best and not os.path.exists(save_path):
+                print(f'Compatibility issue: best_{best}_models unavailable, using just best_models.')
+                save_path = os.path.join(self.logger.full_output_folder, 'best_models')
 
         self.policy.actor_critic = torch.load(os.path.join(save_path, f"policy{idx_label}.pt"))
         self.vae.encoder = torch.load(os.path.join(save_path, f"encoder{idx_label}.pt"))

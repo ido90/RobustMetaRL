@@ -194,7 +194,8 @@ def main():
         except:
             n_tasks = 1000
         learner.test(n_tasks=n_tasks, load='final')
-        learner.test(n_tasks=n_tasks, load='best')
+        learner.test(n_tasks=n_tasks, load='best_cvar')
+        learner.test(n_tasks=n_tasks, load='best_mean')
 
 
 if __name__ == '__main__':
