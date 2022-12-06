@@ -8,6 +8,8 @@ def get_args(rest_args):
     # --- GENERAL ---
 
     parser.add_argument('--num_frames', type=int, default=6e7, help='number of frames to train')
+    parser.add_argument('--valid_tasks', type=int, default=32, help='number of validation tasks')
+    parser.add_argument('--test_tasks', type=int, default=1000, help='number of test tasks')
     parser.add_argument('--max_rollouts_per_task', type=int, default=2, help='number of MDP episodes for adaptation')
     parser.add_argument('--exp_label', default='varibad', help='label (typically name of method)')
     parser.add_argument('--env_name', default='HalfCheetahBody-v0', help='environment to train on')

@@ -421,13 +421,13 @@ class MetaLearner:
 
         start_time = time.time()
         n_iters = int(np.ceil(n_tasks / self.args.num_processes))
-        rr = dict(ep=[], ret=[])
+        rr = dict(ep=[], ret=[], info=[])
         for i in range(self.args.task_dim):
             rr[f'task{i:d}'] = []
 
         for i in range(n_iters):
             ret_rms = self.envs.venv.ret_rms if self.args.norm_rew_for_policy else None
-            returns_per_episode, tasks = utl_eval.evaluate(
+            returns_per_episode, tasks, info = utl_eval.evaluate(
                 args=self.args,
                 policy=self.policy,
                 ret_rms=ret_rms,
@@ -450,7 +450,11 @@ class MetaLearner:
                 rr[f'task{i:d}'].extend(list(np.repeat(task_i, n_eps)))
             rr['ep'].extend(n_tasks * list(np.arange(n_eps)))
             rr['ret'].extend(returns_per_episode.cpu().numpy().reshape(-1))
+            if info is not None:
+                rr['info'].extend(info.cpu().numpy().reshape(-1))
 
+        if not rr['info']:
+            del rr['info']
         rr = pd.DataFrame(rr)
         pd.to_pickle(rr, f'{self.logger.full_output_folder}/{fname}.pkl')
         ret_mean = rr.ret.mean()
@@ -484,16 +488,29 @@ class MetaLearner:
         # --- evaluate policy ----
 
         if (self.iter_idx + 1) % self.args.eval_interval == 0:
+            tasks = []
+            returns_per_episode = None
 
-            ret_rms = self.envs.venv.ret_rms if self.args.norm_rew_for_policy else None
-            returns_per_episode, tasks = utl_eval.evaluate(
-                args=self.args,
-                policy=self.policy,
-                ret_rms=ret_rms,
-                encoder=self.vae.encoder,
-                iter_idx=self.iter_idx,
-                tasks=self.train_tasks,  # None (unless args.single_task_mode==True)
-            )
+            n_iters = int(np.ceil(self.args.valid_tasks / self.args.num_processes))
+            for i in range(n_iters):
+                ret_rms = self.envs.venv.ret_rms if self.args.norm_rew_for_policy else None
+                returns_per_episode_i, tasks_i, _ = utl_eval.evaluate(
+                    args=self.args,
+                    policy=self.policy,
+                    ret_rms=ret_rms,
+                    encoder=self.vae.encoder,
+                    iter_idx=self.args.test_tasks+i,  # used for seed
+                    tasks=None,
+                )
+
+                # returns_per_episode_i is (n_tasks, n_eps)
+                if returns_per_episode_i.shape[0] == 1:
+                    tasks_i = [tasks_i]
+                tasks.extend(tasks_i)
+                if returns_per_episode is None:
+                    returns_per_episode = returns_per_episode_i
+                else:
+                    returns_per_episode = torch.cat((returns_per_episode, returns_per_episode_i), dim=0)
 
             # log the return avg/std across tasks (=processes)
             returns_avg = returns_per_episode.mean(dim=0)

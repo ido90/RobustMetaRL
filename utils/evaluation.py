@@ -31,6 +31,12 @@ def evaluate(args,
     #  all processes have at least [num_episodes] many episodes)
     returns_per_episode = torch.zeros((num_processes, num_episodes + 1)).to(device)
 
+    # gather information in addition to returns
+    info_key, more_info = None, None
+    if 'KhazadDum' in env_name:
+        info_key = 'path'
+        more_info = torch.zeros_like(returns_per_episode)
+
     # --- initialise environments and latents ---
 
     envs = make_vec_envs(env_name,
@@ -93,6 +99,8 @@ def evaluate(args,
             returns_per_episode[range(num_processes), task_count] += rew_raw.view(-1)
 
             for i in np.argwhere(done_mdp).flatten():
+                if info_key is not None:
+                    more_info[i, task_count[i]] = infos[i][info_key]
                 # count task up, but cap at num_episodes + 1
                 task_count[i] = min(task_count[i] + 1, num_episodes)  # zero-indexed, so no +1
             if np.sum(done) > 0:
@@ -101,7 +109,7 @@ def evaluate(args,
 
     envs.close()
 
-    return returns_per_episode[:, :num_episodes], tasks
+    return returns_per_episode[:, :num_episodes], tasks, more_info[:, :num_episodes]
 
 
 def visualise_behaviour(args,
