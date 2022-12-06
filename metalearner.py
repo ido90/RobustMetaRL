@@ -408,7 +408,7 @@ class MetaLearner:
 
         return policy_train_stats
 
-    def test(self, n_episodes=1000, load=None, fname='test_res'):
+    def test(self, n_tasks=1000, load=None, fname='test_res'):
         if load is not None:
             fname += f'_{load}'
             if load == 'final':
@@ -420,7 +420,7 @@ class MetaLearner:
             print(f'Testing {load} model...')
 
         start_time = time.time()
-        n_iters = int(np.ceil(n_episodes / self.args.num_processes))
+        n_iters = int(np.ceil(n_tasks / self.args.num_processes))
         rr = dict(ep=[], ret=[])
         for i in range(self.args.task_dim):
             rr[f'task{i:d}'] = []

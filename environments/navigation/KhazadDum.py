@@ -27,21 +27,21 @@ class KhazadDum(core.Env):
     metadata = {'render.modes': ['human']}
 
     def __init__(self, action_noise=0.1, max_episode_steps=48, continuous=False,
-                 obs_level=1, one_hot=False, seed=None, init_state=None, safe_banks=True,
-                 exp_bonus=24, per_action_bonus=True, bridge_bonus_factor=1, eval_mode=None,
-                 normalize_rewards=48, continuous_rewards=False, size=9):
+                 obs_level=1, one_hot=True, seed=None, init_state=None, safe_banks=True,
+                 exp_bonus=0, per_action_bonus=True, bridge_bonus_factor=1, eval_mode=None,
+                 normalize_rewards=48, continuous_rewards=True, size=9):
 
         self.continuous = continuous
         self.obs_level = obs_level  # 0 = x,y; 1 = x,y,abyss_distances
         self.one_hot = one_hot
-        self.W, self.H = size, size
-        self.init_state_range = ((0.5,3.5), (0.5,2.5))
+        self.W, self.H = size+1, size
+        self.init_state_range = ((0.5,2.5), (0.5,2.5))
         self.goal_state = np.array((2, self.H-2))
         self.abyss_range = (3, 6)
         self.bridge1 = (2, 3)
         self.bridge2 = (self.W-4, self.W-1)
         self.obs_range = 2
-        self.max_speed = 1 if self.continuous else 2
+        self.max_speed = 1 # if self.continuous else 2
 
         self.task_dim = 1
         self.average_noise = action_noise
@@ -62,18 +62,22 @@ class KhazadDum(core.Env):
             low=np.float32(-1), high=np.float32(1),
             shape=(shape,), dtype=np.float32)
 
+        n_speeds = 1
         if self.continuous:
             # dx + dy
             self.action_space = spaces.Box(np.float32(-1), np.float32(1),
                                            shape=(2,), dtype=np.float32)
         else:
             # direction (4) X acceleration (3)
-            self.action_space = spaces.Discrete(4*3)
+            # self.action_space = spaces.Discrete(4*3)
+            self.action_space = spaces.Discrete(4*n_speeds)
 
         self.directions_map = [np.array((-1, 0)), np.array((1, 0)),
                                np.array((0, -1)), np.array((0, 1))]  # l, r, d, u
-        self.speed_map = [self.max_speed/4, self.max_speed/2, self.max_speed]
-        self.actions_map = lambda i: (self.directions_map[i//3], self.speed_map[i%3])
+        # self.speed_map = [self.max_speed/4, self.max_speed/2, self.max_speed]
+        # self.actions_map = lambda i: (self.directions_map[i//3], self.speed_map[i%3])
+        self.speed_map = [self.max_speed/(2**i) for i in range(n_speeds)]
+        self.actions_map = lambda i: (self.directions_map[i//n_speeds], self.speed_map[i%n_speeds])
 
         self.map = self._set_walls()
         self.goal_cell, self.goal = self._set_in_map(self.goal_state)
@@ -109,7 +113,7 @@ class KhazadDum(core.Env):
     def get_obs(self):
         if self.one_hot:
             return self.one_hot_encoding()
-        obs = np.array(self.state_xy / self.W, dtype=np.float32)
+        obs = np.array(self.state_xy / np.array((self.W,self.H)), dtype=np.float32)
         if 1 <= self.obs_level <= 3:
             obs = np.concatenate((
                 obs, np.array(self.abyss_distances(
@@ -121,15 +125,16 @@ class KhazadDum(core.Env):
 
     def get_local_map(self, rad=2):
         pad = max(0, rad - 1)
-        n = self.W + 2*pad
-        padded_map = np.ones((n, n), dtype=np.float32)
-        padded_map[pad:n-pad, pad:n-pad] = self.map  # 1=wall, -1=abyss
+        nw = self.W + 2*pad
+        nh = self.H + 2*pad
+        padded_map = np.ones((nw, nh), dtype=np.float32)
+        padded_map[pad:nw-pad, pad:nh-pad] = self.map  # 1=wall, -1=abyss
         x = pad + self.state_cell[0]
         y = pad + self.state_cell[1]
         return padded_map[x-rad:x+rad+1, y-rad:y+rad+1]
 
     def one_hot_encoding(self):
-        m = np.zeros((self.H,self.W), dtype=np.float32)  # i,j=0,...,n-1
+        m = np.zeros((self.W,self.H), dtype=np.float32)  # i,j=0,...,n-1
         x, y = self.state_xy  # 0.5<=x,y<=n-1.5
         i0, j0 = self.state_xy.astype(int)  # 0<=i0,j0<=n-2
         i1, j1 = i0+1, j0+1
@@ -269,28 +274,33 @@ class KhazadDum(core.Env):
         # done = False
         bonus = 0
         if self.reached_dest > 0:
-            r = 1
+            r = 0
         elif self.reached_dest < 0:
             r = -1
         else:
-            # r = -1
-            r = -np.sum(np.abs(self.state_xy[1]-self.goal_state[1])) / self.H \
-                if self.continuous_rewards else -1
+            if self.continuous_rewards:
+                r = max(-np.sum(np.abs(self.state_xy-self.goal_state)) / 5, -1)
+            else:
+                r = -1
+            # r = -np.sum(np.abs(self.state_xy[1]-self.goal_state[1])) / self.H \
+            #     if self.continuous_rewards else -1
 
             # success
             if self.goal[self.state_cell[0], self.state_cell[1]] > 0:
                 self.reached_dest = 1
+                r += 10
                 # r = 48
 
             # abyss
             if self.map[self.state_cell[0], self.state_cell[1]] < 0:
                 self.reached_dest = -1
+                r -= 10
                 # r, done = -48, True
 
         if self.reached_dest >= 0:
-            if self.continuous_rewards:
-                abyss_distance = np.min(self.abyss_distances())  # in [0,1]
-                r -= (1-abyss_distance)
+            # if self.continuous_rewards:
+            #     abyss_distance = np.min(self.abyss_distances())  # in [0,1]
+            #     r -= (1-abyss_distance)
             bonus = self.get_exp_bonus(action)
 
         r += bonus
@@ -326,7 +336,7 @@ class KhazadDum(core.Env):
                         0, self.action_noise * self.speed**2)
                     next_xy[1] += random.normalvariate(
                         0, self.action_noise * self.speed**2)
-            next_xy = np.clip(next_xy, 0, self.H-1)
+            next_xy = np.clip(next_xy, (0, 0), (self.W-1, self.H-1))
             next_cell = np.round(next_xy).astype(int)
 
             # moved = False
@@ -373,9 +383,9 @@ class KhazadDum(core.Env):
 
     def _set_in_map(self, xy=None, radius=0.):
         if xy is None:
-            cell = random.choice(np.arange(self.H)), random.choice(np.arange(self.W))
+            cell = random.choice(np.arange(self.W)), random.choice(np.arange(self.H))
             while self.map[cell[0], cell[1]] != 0:
-                cell = random.choice(np.arange(self.H)), random.choice(np.arange(self.W))
+                cell = random.choice(np.arange(self.W)), random.choice(np.arange(self.H))
             xy = np.array(cell).copy()
         else:
             xy = np.array(xy)
@@ -428,7 +438,7 @@ class KhazadDum(core.Env):
     def _set_walls(self):
         W = self.W
         H = self.H
-        map = np.zeros((H, W))
+        map = np.zeros((W, H))
 
         # abyss
         map[:self.bridge1[0], self.abyss_range[0]:self.abyss_range[1]] = -1
@@ -462,6 +472,8 @@ class KhazadDum(core.Env):
     def sample_task(self, avg=None):
         if avg is None:
             avg = self.average_noise
+        if avg == 0:
+            return 0
         return random.expovariate(1/avg)
 
     def sample_tasks(self, n_tasks):

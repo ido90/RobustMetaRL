@@ -189,8 +189,12 @@ def main():
         learner.train()
 
         # test
-        learner.test(load='final')
-        learner.test(load='best')
+        try:
+            n_tasks = args.test_tasks
+        except:
+            n_tasks = 1000
+        learner.test(n_tasks=n_tasks, load='final')
+        learner.test(n_tasks=n_tasks, load='best')
 
 
 if __name__ == '__main__':

@@ -57,6 +57,14 @@ def get_cem_sampler(env_name, seed, oracle=False, alpha=0.05, cem_type=1):
                 # titles=('strength', 'mass'))
                 # titles=('butt_mass', 'foot_mass', 'hand_mass', 'butt_len', 'foot_len', 'hand_len'))
                 # (butt = either butt or pelvis)
+    elif env_name == 'KhazadDum-v0':
+        if oracle:
+            raise NotImplementedError(
+                f'No oracle-CEM implemented for KhazadDum-v0.')
+        else:
+            return CemExp(
+                0.1, ref_alpha=alpha, batch_size=16*16, min_batch_update=0.1,
+                n_orig_per_batch=0.2, soft_update=0.5, title=f'kd_{sfx}')
     raise ValueError(env_name)
 
 
@@ -178,3 +186,20 @@ class LogBeta(cem.CEM):
         w = np.repeat(w[:, np.newaxis], s.shape[1], axis=1)
         s = (np.log2(s) - self.log_range[0]) / (self.log_range[1]-self.log_range[0])
         return np.clip(np.mean(w*s, axis=0)/wmean, self.eps, 1-self.eps)
+
+class CemExp(cem.CEM):
+    def __init__(self, *args, **kwargs):
+        super(CemExp, self).__init__(*args, **kwargs)
+        self.default_dist_titles = 'exp_mean'
+        self.default_samp_titles = 'sample'
+
+    def do_sample(self, phi):
+        return np.random.exponential(phi)
+
+    def pdf(self, x, phi):
+        return stats.expon.pdf(x, 0, phi)
+
+    def update_sample_distribution(self, samples, weights):
+        w = np.array(weights)
+        s = np.array(samples)
+        return np.mean(w*s)/np.mean(w)

@@ -197,6 +197,7 @@ def main():
         tasks = [args.alpha]
 
     save_gif = args.save_interval > 0
+    num_episodes = args.max_rollouts_per_task
 
     # set args for demo run
     args.deterministic_execution = True
@@ -235,7 +236,8 @@ def main():
             learner,
             tasks=tasks,
             gif=f'{short_name}_{method}_{args.seed}' if save_gif else None,
-            dur=1 if short_name.startswith('hum') else 5
+            dur=1 if short_name.startswith('hum') else 5,
+            num_episodes=num_episodes
         )
 
 

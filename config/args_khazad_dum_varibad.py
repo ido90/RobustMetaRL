@@ -7,12 +7,13 @@ def get_args(rest_args):
 
     # --- GENERAL ---
 
-    parser.add_argument('--num_frames', type=int, default=2e6, help='number of frames to train')
-    parser.add_argument('--max_rollouts_per_task', type=int, default=2, help='number of MDP episodes for adaptation')
+    parser.add_argument('--num_frames', type=int, default=4e6, help='number of frames to train')
+    parser.add_argument('--test_tasks', type=int, default=1000, help='number of test tasks')
+    parser.add_argument('--max_rollouts_per_task', type=int, default=4, help='number of MDP episodes for adaptation')
     parser.add_argument('--exp_label', default='varibad', help='label (typically name of method)')
     parser.add_argument('--env_name', default='KhazadDum-v0', help='environment to train on')
 
-    parser.add_argument('--alpha', type=float, default=0.05, help='CVaR risk level')
+    parser.add_argument('--alpha', type=float, default=0.01, help='CVaR risk level')
     parser.add_argument('--tail', type=int, default=0, help='learn from all batch / tail / scheduled-tail')
     parser.add_argument('--cem', type=int, default=0, help='use CEM sampler (none / strict / scheduled)')
     parser.add_argument('--oracle', type=bool, default=False, help='use oracle CEM sampler')
@@ -66,7 +67,7 @@ def get_args(rest_args):
     parser.add_argument('--policy_eps', type=float, default=1e-8, help='optimizer epsilon (1e-8 for ppo, 1e-5 for a2c)')
     parser.add_argument('--policy_init_std', type=float, default=1.0, help='only used for continuous actions')
     parser.add_argument('--policy_value_loss_coef', type=float, default=0.5, help='value loss coefficient')
-    parser.add_argument('--policy_entropy_coef', type=float, default=0.01, help='entropy term coefficient')
+    parser.add_argument('--policy_entropy_coef', type=float, default=0.03, help='entropy term coefficient')
     parser.add_argument('--policy_gamma', type=float, default=0.999, help='discount factor for rewards')
     parser.add_argument('--policy_use_gae', type=boolean_argument, default=True,
                         help='use generalized advantage estimation')

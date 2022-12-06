@@ -136,6 +136,6 @@ register(
 register(
     'KhazadDum-v0',
     entry_point='environments.navigation.KhazadDum:KhazadDum',
-    kwargs={'exp_bonus':0},
+    kwargs={},
     max_episode_steps=48,
 )

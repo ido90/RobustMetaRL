@@ -265,7 +265,7 @@ def qgroups(x, nbins=5, apply_labs=True):
 
 def compare_quantiles(dd, x, y, hue=None, fac=None, xbins=5, hbins=5, fbins=4,
                       ci=95, box=False, mean=np.mean, copy=True, axs=None, a0=0,
-                      lab_rotation=20, axs_args=None, **kwargs):
+                      mean_digits=0, lab_rotation=20, axs_args=None, **kwargs):
     if copy: dd = dd.copy()
     # prepare groups
     xx = x+'_tmp'
@@ -310,7 +310,7 @@ def compare_quantiles(dd, x, y, hue=None, fac=None, xbins=5, hbins=5, fbins=4,
         if mean is not None and hue:
             for i,h in enumerate(curr_hues):
                 m = mean(d[d[hue]==h][y])
-                hh = f'{h:s} ({m:.0f})'
+                hh = f'{h} ({m:.{mean_digits:d}f})'
                 d.loc[d[hue]==h, hue] = hh
                 curr_hues[i] = hh
         if box:
