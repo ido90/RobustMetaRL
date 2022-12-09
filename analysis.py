@@ -25,6 +25,8 @@ def agg_eps(d):
     d = d.copy()
     d['ret'] = d.ret.mean()
     d.drop('ep', axis=1, inplace=True)
+    if 'info' in d.columns:
+        d.drop('info', axis=1, inplace=True)
     return d.head(1)
 
 # aggregate over tasks within seed
@@ -95,8 +97,6 @@ def load_test_data(env_name, env_short, methods, seeds, alpha,
     base_path = get_base_path(env_name, base_path)
     cvar = get_cvar_fun(alpha)
     if model is not None:
-        if model == 'best':
-            model = 'best_cvar'
         fname += f'_{model}'
 
     rr = pd.DataFrame()
