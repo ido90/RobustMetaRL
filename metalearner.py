@@ -95,7 +95,7 @@ class MetaLearner:
                 self.cem.ref_alpha = 1
 
         # record results
-        self.rr = dict(iter=[], task_id=[], ep=[], ret=[])
+        self.rr = dict(iter=[], task_id=[], ep=[], ret=[], info=[])
         for i in range(self.args.task_dim):
             self.rr[f'task{i:d}'] = []
         self.best_mean_return = -np.inf
@@ -414,7 +414,7 @@ class MetaLearner:
     def test(self, n_tasks=1000, load=None, fname='test_res'):
         if load is not None:
             fname += f'_{load}'
-            self.load_model(best=load)
+            self.load_model(model=load)
             print(f'Testing {load} model...')
 
         start_time = time.time()
@@ -449,7 +449,8 @@ class MetaLearner:
             rr['ep'].extend(n_tasks * list(np.arange(n_eps)))
             rr['ret'].extend(returns_per_episode.cpu().numpy().reshape(-1))
             if info is not None:
-                rr['info'].extend(info.cpu().numpy().reshape(-1))
+                for info_i in info:
+                    rr['info'].extend(info_i)
 
         if not rr['info']:
             del rr['info']
@@ -488,11 +489,12 @@ class MetaLearner:
         if (self.iter_idx + 1) % self.args.eval_interval == 0:
             tasks = []
             returns_per_episode = None
+            info = None
 
             n_iters = int(np.ceil(self.args.valid_tasks / self.args.num_processes))
             for i in range(n_iters):
                 ret_rms = self.envs.venv.ret_rms if self.args.norm_rew_for_policy else None
-                returns_per_episode_i, tasks_i, _ = utl_eval.evaluate(
+                returns_per_episode_i, tasks_i, info_i = utl_eval.evaluate(
                     args=self.args,
                     policy=self.policy,
                     ret_rms=ret_rms,
@@ -509,6 +511,10 @@ class MetaLearner:
                     returns_per_episode = returns_per_episode_i
                 else:
                     returns_per_episode = torch.cat((returns_per_episode, returns_per_episode_i), dim=0)
+                if info is None:
+                    info = info_i
+                else:
+                    info = np.concatenate((info, info_i), axis=0)
 
             # log the return avg/std across tasks (=processes)
             returns_avg = returns_per_episode.mean(dim=0)
@@ -522,8 +528,7 @@ class MetaLearner:
                 self.logger.add('return_std_per_iter/episode_{}'.format(k + 1), returns_std[k], self.iter_idx)
                 self.logger.add('return_std_per_frame/episode_{}'.format(k + 1), returns_std[k], self.frames)
 
-            mean_return = returns_cvar if (self.args.cem>0 or self.args.tail>0) else returns_avg
-            mean_return = mean_return.mean().item()
+            mean_return = returns_avg.mean().item()
             if mean_return >= self.best_mean_return:
                 self.best_mean_return = mean_return
                 self.best_mean_iter = self.iter_idx
@@ -531,8 +536,7 @@ class MetaLearner:
             else:
                 self.last_mean_improved = False
 
-            cvar_return = returns_cvar if (self.args.cem>0 or self.args.tail>0) else returns_avg
-            cvar_return = cvar_return.mean().item()
+            cvar_return = returns_cvar.mean().item()
             if cvar_return >= self.best_cvar_return:
                 self.best_cvar_return = cvar_return
                 self.best_cvar_iter = self.iter_idx
@@ -562,6 +566,11 @@ class MetaLearner:
                 self.rr[f'task{i:d}'].extend(list(np.repeat(task_i, n_eps)))
             self.rr['ep'].extend(n_tasks*list(np.arange(n_eps)))
             self.rr['ret'].extend(returns_per_episode.cpu().numpy().reshape(-1))
+            if info is not None:
+                for info_i in info:
+                    self.rr['info'].extend(info_i)
+            elif 'info' in self.rr:
+                del self.rr['info']
             rr = pd.DataFrame(self.rr)
             pd.to_pickle(rr, f'{self.logger.full_output_folder}/res.pkl')
 
@@ -617,14 +626,13 @@ class MetaLearner:
     def is_best_model(self, mode='mean'):
         # save whenever evaluation gets better
         if mode == 'mean':
-            is_evaluating = (self.iter_idx + 1) % self.args.eval_interval == 0
             improved = self.last_mean_improved
-            return is_evaluating and improved
         elif mode == 'cvar':
-            is_evaluating = (self.iter_idx + 1) % self.args.eval_interval == 0
             improved = self.last_cvar_improved
-            return is_evaluating and improved
-        raise ValueError(mode)
+        else:
+            raise ValueError(mode)
+        is_evaluating = (self.iter_idx + 1) % self.args.eval_interval == 0
+        return is_evaluating and improved
 
     def save_model(self, best=''):
         dir = f'best_{best}_models' if best else 'final_models'
@@ -656,19 +664,19 @@ class MetaLearner:
             #     obs_rms = self.envs.venv.obs_rms
             #     utl.save_obj(obs_rms, save_path, f"env_obs_rms{idx_label}")
 
-    def load_model(self, idx_label='', best='', save_path=None):
+    def load_model(self, idx_label='', model='', save_path=None):
         if save_path is None:
-            if best == 'mean':
+            if model == 'best_mean':
                 print(f'Loading model from iteration {self.best_mean_iter:d}/{self.iter_idx:d}.')
-            elif best == 'cvar':
+            elif model == 'best_cvar':
                 print(f'Loading model from iteration {self.best_cvar_iter:d}/{self.iter_idx:d}.')
-            elif best != 'final':
+            elif model != 'final':
                 warnings.warn(f'Unexpected model to load: {best}')
-            dir = f'best_{best}_models' if best else 'final_models'
+            dir = f'{model}_models'
             save_path = os.path.join(self.logger.full_output_folder, dir)
 
-            if best and not os.path.exists(save_path):
-                print(f'Compatibility issue: best_{best}_models unavailable, using best_models instead.')
+            if model and not os.path.exists(save_path):
+                print(f'Compatibility issue: {model}_models unavailable, using best_models instead.')
                 save_path = os.path.join(self.logger.full_output_folder, 'best_models')
 
         self.policy.actor_critic = torch.load(os.path.join(save_path, f"policy{idx_label}.pt"))
