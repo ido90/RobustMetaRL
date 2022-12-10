@@ -1,4 +1,6 @@
 import os
+import warnings
+
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
@@ -96,19 +98,22 @@ def load_test_data(env_name, env_short, methods, seeds, alpha,
                    model='best_cvar', fname=TEST_FILE, base_path='logs'):
     base_path = get_base_path(env_name, base_path)
     cvar = get_cvar_fun(alpha)
-    if model is not None:
-        fname += f'_{model}'
 
     rr = pd.DataFrame()
 
     for method in methods:
+        fnm = fname
+        if model is not None:
+            if isinstance(model, str):
+                fnm = f'{fname}_{model}'
+            elif callable(model):
+                fnm = f'{fname}_{model(method)}'
+            else:
+                warnings.warn(f'Invalid model type: {type(model)}, {model}')
+
         for seed in seeds:
             e = get_dir(base_path, env_short, method, seed)
-            try:
-                d = pd.read_pickle(f'{base_path}/{e}/{fname}.pkl')
-            except:
-                print(f'Cannot load {fname}, loading {fname[:-5]} instead.')
-                d = pd.read_pickle(f'{base_path}/{e}/{fname[:-5]}.pkl')
+            d = pd.read_pickle(f'{base_path}/{e}/{fnm}.pkl')
             d['method'] = method
             d['seed'] = seed
             rr = pd.concat((rr, d))
