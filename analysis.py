@@ -52,7 +52,7 @@ def get_cvar_fun(alpha):
     return cvar
 
 def load_train_data(env_name, env_short, methods, seeds, alpha,
-                    align_progress=False):
+                    align_progress=False, nm_map=None):
     base_path = get_base_path(env_name)
     cvar = get_cvar_fun(alpha)
     dd = pd.DataFrame()
@@ -62,7 +62,7 @@ def load_train_data(env_name, env_short, methods, seeds, alpha,
             e = get_dir(base_path, env_short, method, seed)
             print(e)
             d = pd.read_pickle(f'{base_path}/{e}/{TRAIN_FILE}.pkl')
-            d['method'] = method
+            d['method'] = method if nm_map is None else nm_map[method]
             d['seed'] = seed
             dd = pd.concat((dd, d))
 
@@ -99,7 +99,8 @@ def load_train_data(env_name, env_short, methods, seeds, alpha,
     return dd, dda, ddm, ddc, dd0, dda0, task_dim
 
 def load_test_data(env_name, env_short, methods, seeds, alpha,
-                   model='best_cvar', fname=TEST_FILE, base_path='logs'):
+                   model='best_cvar', fname=TEST_FILE, base_path='logs',
+                   nm_map=None):
     base_path = get_base_path(env_name, base_path)
     cvar = get_cvar_fun(alpha)
 
@@ -118,7 +119,7 @@ def load_test_data(env_name, env_short, methods, seeds, alpha,
         for seed in seeds:
             e = get_dir(base_path, env_short, method, seed)
             d = pd.read_pickle(f'{base_path}/{e}/{fnm}.pkl')
-            d['method'] = method
+            d['method'] = method if nm_map is None else nm_map[method]
             d['seed'] = seed
             rr = pd.concat((rr, d))
 
