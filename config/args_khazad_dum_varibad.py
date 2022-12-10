@@ -7,9 +7,9 @@ def get_args(rest_args):
 
     # --- GENERAL ---
 
-    parser.add_argument('--num_frames', type=int, default=4e6, help='number of frames to train')
-    parser.add_argument('--valid_tasks', type=int, default=96, help='number of validation tasks')
-    parser.add_argument('--test_tasks', type=int, default=1000, help='number of test tasks')
+    parser.add_argument('--num_frames', type=int, default=1e6, help='number of frames to train')
+    parser.add_argument('--valid_tasks', type=int, default=256, help='number of validation tasks')
+    parser.add_argument('--test_tasks', type=int, default=3000, help='number of test tasks')
     parser.add_argument('--max_rollouts_per_task', type=int, default=4, help='number of MDP episodes for adaptation')
     parser.add_argument('--exp_label', default='varibad', help='label (typically name of method)')
     parser.add_argument('--env_name', default='KhazadDum-v0', help='environment to train on')
@@ -63,12 +63,12 @@ def get_args(rest_args):
     parser.add_argument('--lr_policy', type=float, default=7e-4, help='learning rate (default: 7e-4)')
     parser.add_argument('--num_processes', type=int, default=16,
                         help='how many training CPU processes / parallel environments to use (default: 16)')
-    parser.add_argument('--policy_num_steps', type=int, default=400,
+    parser.add_argument('--policy_num_steps', type=int, default=128,
                         help='number of env steps to do (per process) before updating')
     parser.add_argument('--policy_eps', type=float, default=1e-8, help='optimizer epsilon (1e-8 for ppo, 1e-5 for a2c)')
     parser.add_argument('--policy_init_std', type=float, default=1.0, help='only used for continuous actions')
     parser.add_argument('--policy_value_loss_coef', type=float, default=0.5, help='value loss coefficient')
-    parser.add_argument('--policy_entropy_coef', type=float, default=0.03, help='entropy term coefficient')
+    parser.add_argument('--policy_entropy_coef', type=float, default=0.05, help='entropy term coefficient')
     parser.add_argument('--policy_gamma', type=float, default=0.999, help='discount factor for rewards')
     parser.add_argument('--policy_use_gae', type=boolean_argument, default=True,
                         help='use generalized advantage estimation')
@@ -181,10 +181,10 @@ def get_args(rest_args):
     # --- OTHERS ---
 
     # logging, saving, evaluation
-    parser.add_argument('--log_interval', type=int, default=25, help='log interval, one log per n updates')
+    parser.add_argument('--log_interval', type=int, default=50, help='log interval, one log per n updates')
     parser.add_argument('--save_interval', type=int, default=500, help='save interval, one save per n updates')
     parser.add_argument('--save_intermediate_models', type=boolean_argument, default=False, help='save all models')
-    parser.add_argument('--eval_interval', type=int, default=25, help='eval interval, one eval per n updates')
+    parser.add_argument('--eval_interval', type=int, default=50, help='eval interval, one eval per n updates')
     parser.add_argument('--vis_interval', type=int, default=500, help='visualisation interval, one eval per n updates')
     parser.add_argument('--results_log_dir', default=None, help='directory to save results (None uses ./logs)')
 

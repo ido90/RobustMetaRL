@@ -26,15 +26,17 @@ import general_utils as utils
 class KhazadDum(core.Env):
     metadata = {'render.modes': ['human']}
 
-    def __init__(self, action_noise=0.1, max_episode_steps=48, continuous=False,
+    def __init__(self, action_noise=0.1, max_episode_steps=32, continuous=False,
                  obs_level=1, one_hot=True, seed=None, init_state=None, safe_banks=True,
                  exp_bonus=0, per_action_bonus=True, bridge_bonus_factor=1, eval_mode=None,
-                 normalize_rewards=48, continuous_rewards=True, size=9):
+                 normalize_rewards=None, continuous_rewards=True, size=(11,9)):
 
         self.continuous = continuous
         self.obs_level = obs_level  # 0 = x,y; 1 = x,y,abyss_distances
         self.one_hot = one_hot
-        self.W, self.H = size+1, size
+        if isinstance(size, int):
+            size = (size, size)
+        self.W, self.H = size
         self.init_state_range = ((0.5,2.5), (0.5,2.5))
         self.goal_state = np.array((2, self.H-2))
         self.abyss_range = (3, 6)
@@ -49,7 +51,7 @@ class KhazadDum(core.Env):
         self.safe_banks = safe_banks
         self._max_episode_steps = max_episode_steps
         self.continuous_rewards = continuous_rewards
-        self.normalize_rewards = normalize_rewards
+        self.normalize_rewards = max_episode_steps if normalize_rewards is None else normalize_rewards
         self.exp_bonus = exp_bonus
         self.per_action_bonus = per_action_bonus
         self.bridge_bonus_factor = bridge_bonus_factor
@@ -97,7 +99,7 @@ class KhazadDum(core.Env):
 
         self.nsteps = 0
         self.speed = 0
-        self.is_long_path = 0
+        self.path = 'stay'
         self.tot_reward = 0
         self.reached_dest = 0
 
@@ -225,7 +227,7 @@ class KhazadDum(core.Env):
         self.nsteps = 0
         self.speed = 0
         self.tot_reward = 0
-        self.is_long_path = 0
+        self.path = 'stay'
         self.reached_dest = 0
 
         obs = self.get_obs()
@@ -270,8 +272,7 @@ class KhazadDum(core.Env):
 
         return bonus
 
-    def get_reward(self, action):
-        # done = False
+    def get_reward(self, action, is_noisy):
         bonus = 0
         if self.reached_dest > 0:
             r = 0
@@ -284,18 +285,20 @@ class KhazadDum(core.Env):
                 r = -1
             # r = -np.sum(np.abs(self.state_xy[1]-self.goal_state[1])) / self.H \
             #     if self.continuous_rewards else -1
+            if is_noisy:
+                r -= 3 * self.action_noise
 
             # success
             if self.goal[self.state_cell[0], self.state_cell[1]] > 0:
                 self.reached_dest = 1
-                r += 10
-                # r = 48
+                self.path += '_done'
+                r += 5
 
             # abyss
             if self.map[self.state_cell[0], self.state_cell[1]] < 0:
                 self.reached_dest = -1
-                r -= 10
-                # r, done = -48, True
+                self.path += '_fall'
+                # r -= 10
 
         if self.reached_dest >= 0:
             # if self.continuous_rewards:
@@ -324,18 +327,22 @@ class KhazadDum(core.Env):
         direction, self.speed = self.actions_map(action)
         return self.state_xy + self.speed * direction
 
+    def is_noisy(self):
+        return self.reached_dest == 0 and self.action_noise > 0 and (
+                (not self.safe_banks) or self.location_category() == 3)
+
     def step(self, action):
         self.curr_action_traj.append(action)
 
+        is_noisy = self.is_noisy()
         if self.reached_dest == 0:
             next_xy = self.step_continuous(action) if self.continuous \
                 else self.step_discrete(action)
-            if self.action_noise:
-                if (not self.safe_banks) or self.location_category() == 3:
-                    next_xy[0] += random.normalvariate(
-                        0, self.action_noise * self.speed**2)
-                    next_xy[1] += random.normalvariate(
-                        0, self.action_noise * self.speed**2)
+            if is_noisy:
+                next_xy[0] += random.normalvariate(
+                    0, self.action_noise * self.speed**2)
+                next_xy[1] += random.normalvariate(
+                    0, self.action_noise * self.speed**2)
             next_xy = np.clip(next_xy, (0, 0), (self.W-1, self.H-1))
             next_cell = np.round(next_xy).astype(int)
 
@@ -349,7 +356,7 @@ class KhazadDum(core.Env):
 
         self.curr_state_traj.append(np.reshape(self.state_xy,(1,self.state_xy.size)))
 
-        r = self.get_reward(action)
+        r = self.get_reward(action, is_noisy)
 
         done = False
         if self.nsteps >= self._max_episode_steps-1:
@@ -359,19 +366,19 @@ class KhazadDum(core.Env):
 
         if self.abyss_range[0] < self.state_xy[1]+0.5 < self.abyss_range[1]:
             if self.bridge1[0] < self.state_xy[0]+0.5 < self.bridge1[1]:
-                self.is_long_path = -1
+                self.path = 'short'
             elif self.bridge2[0] < self.state_xy[0]+0.5 < self.bridge2[1]:
-                self.is_long_path = 1
+                self.path = 'long'
 
         self.tot_reward += r
         self.nsteps += 1
-        info = {'path': self.is_long_path}
+        info = {'path': self.path}
 
         if done:
             self.state_traj = self.curr_state_traj
             self.action_traj = self.curr_action_traj
             info = {'r': self.tot_reward, 'l': self.nsteps,
-                    'path': self.is_long_path}
+                    'path': self.path}
 
         self._time += 1
         self._return += r

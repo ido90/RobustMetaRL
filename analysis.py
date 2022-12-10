@@ -15,8 +15,12 @@ def get_base_path(env_name, base='logs'):
     return f'{base}/logs_{env_name}'
 
 def get_dir(base_path, env_short, method, seed):
-    return sorted([s for s in os.listdir(base_path)
-                   if s.startswith(f'{env_short}_{method}_{seed}__')])[-1]
+    try:
+        return sorted([s for s in os.listdir(base_path)
+                       if s.startswith(f'{env_short}_{method}_{seed}__')])[-1]
+    except:
+        print(f'{base_path}/{env_short}_{method}_{seed}__')
+        raise
 
 def get_task_dim(dd):
     return len([col for col in dd.columns

@@ -63,7 +63,7 @@ def get_cem_sampler(env_name, seed, oracle=False, alpha=0.05, cem_type=1):
                 f'No oracle-CEM implemented for KhazadDum-v0.')
         else:
             return CemExp(
-                0.1, ref_alpha=alpha, batch_size=16*16, min_batch_update=0.1,
+                0.1, ref_alpha=alpha, batch_size=8*16, min_batch_update=0.1,
                 n_orig_per_batch=0.2, soft_update=0.5, title=f'kd_{sfx}')
     raise ValueError(env_name)
 

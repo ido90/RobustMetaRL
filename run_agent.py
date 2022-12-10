@@ -188,7 +188,7 @@ def main():
         else:
             method = 'cesbad'
     elif args.tail == 1:
-        method = 'cvarbad'
+        method = 'cvrbad'
     elif args.tail == 2:
         method = 'schedbad'
 
@@ -228,7 +228,9 @@ def main():
         base_path = analysis.get_base_path(args.env_name)
         dir = analysis.get_dir(base_path, short_name, method, args.seed)
         # pth = f'{base_path}/{dir}/final_models'
-        pth = f'{base_path}/{dir}/best_models'
+        # pth = f'{base_path}/{dir}/best_models'
+        # pth = f'{base_path}/{dir}/best_mean_models'
+        pth = f'{base_path}/{dir}/best_cvar_models'
         print('\nLoading model from:', pth)
         learner = MetaLearner(args)
         learner.load_model(save_path=pth)
