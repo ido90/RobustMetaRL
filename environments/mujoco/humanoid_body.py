@@ -41,6 +41,7 @@ class HumanoidBodyEnv(HumanoidEnv):
         self._time = 0
         self._return = 0
         self._last_return = 0
+        self._curr_rets = []
 
     def step(self, action):
         observation, reward, done, done2, infos = super().step(action)
@@ -54,6 +55,7 @@ class HumanoidBodyEnv(HumanoidEnv):
         self._return += reward
         if self._time % self._max_episode_steps == 0:
             self._last_return = self._return
+            self._curr_rets.append(self._return)
             self._return = 0
         return observation, reward, done, infos
 
@@ -92,7 +94,7 @@ class HumanoidBodyEnv(HumanoidEnv):
                                data.cfrc_ext.flat])
 
     def get_last_return(self):
-        return self._last_return
+        return np.sum(self._curr_rets)
 
     def set_task(self, task):
         self.task = task
@@ -125,4 +127,5 @@ class HumanoidBodyEnv(HumanoidEnv):
         self.set_task(task)
         self._time = 0
         self._last_return = self._return
+        self._curr_rets = []
         self._return = 0

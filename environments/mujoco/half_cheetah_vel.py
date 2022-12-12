@@ -36,6 +36,7 @@ class HalfCheetahVelEnv(HalfCheetahEnv):
         self._time = 0
         self._return = 0
         self._last_return = 0
+        self._curr_rets = []
 
     def step(self, action):
         xposbefore = self.sim.data.qpos[0]
@@ -58,11 +59,12 @@ class HalfCheetahVelEnv(HalfCheetahEnv):
             # print(f'[{self._time//self._max_episode_steps}] '
             #       f'{self.goal_velocity},\t{self._return}')
             self._last_return = self._return
+            self._curr_rets.append(self._return)
             self._return = 0
         return observation, reward, done, infos
 
     def get_last_return(self):
-        return self._last_return
+        return np.sum(self._curr_rets)
 
     def set_task(self, task):
         if isinstance(task, np.ndarray):
@@ -92,6 +94,7 @@ class HalfCheetahVelEnv(HalfCheetahEnv):
         self.set_task(task)
         self._time = 0
         self._last_return = self._return
+        self._curr_rets = []
         self._return = 0
         # self.reset()
 

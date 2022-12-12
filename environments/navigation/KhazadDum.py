@@ -106,6 +106,7 @@ class KhazadDum(core.Env):
         self._time = 0
         self._return = 0
         self._last_return = 0
+        self._curr_rets = []
 
     # def seed(self, seed=None):
     #     self.np_random, seed = seeding.np_random(seed)
@@ -384,6 +385,7 @@ class KhazadDum(core.Env):
         self._return += r
         if self._time % self._max_episode_steps == 0:
             self._last_return = self._return
+            self._curr_rets.append(self._return)
             self._return = 0
 
         return obs, r, done, info
@@ -465,7 +467,7 @@ class KhazadDum(core.Env):
         return 0
 
     def get_last_return(self):
-        return self._last_return
+        return np.sum(self._curr_rets)
 
     def set_task(self, task):
         if isinstance(task, np.ndarray):
@@ -492,6 +494,7 @@ class KhazadDum(core.Env):
         self.set_task(task)
         self._time = 0
         self._last_return = self._return
+        self._curr_rets = []
         self._return = 0
         # self.reset()
 
