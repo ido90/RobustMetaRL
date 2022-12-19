@@ -15,9 +15,13 @@ def get_base_path(env_name, base='logs'):
     return f'{base}/logs_{env_name}'
 
 def get_dir(base_path, env_short, method, seed):
+    get_month = lambda s: int(s[s.find(':') + 1:s.find(':') + 3])
+    paths = [s for s in os.listdir(base_path)
+             if s.startswith(f'{env_short}_{method}_{seed}__')]
+    last_month = np.max([get_month(s) for s in paths])
+    paths = [s for s in paths if get_month(s)==last_month]
     try:
-        return sorted([s for s in os.listdir(base_path)
-                       if s.startswith(f'{env_short}_{method}_{seed}__')])[-1]
+        return sorted(paths)[-1]
     except:
         print(f'{base_path}/{env_short}_{method}_{seed}__')
         raise
@@ -179,30 +183,30 @@ def show_validation_vs_tasks(dda, tasks=None, xbins=11, fbins=7):
             axs.labs(j, tasks[i], 'return')
     return axs
 
-def show_test_vs_tasks(rra, rra0, title=None, tasks=None, xbins=11):
+def show_test_vs_tasks(rra, rra0=None, title=None, tasks=None, xbins=11, **kwargs):
     print('Test returns vs. task - over all seeds aggregated:')
     task_dim = get_task_dim(rra)
-    axs = utils.Axes(2*task_dim, 2, fontsize=15)
+    axs = utils.Axes(task_dim, min(3, task_dim), fontsize=15)
     a = 0
 
     if tasks is None:
         tasks = [f'task_{i:d}' for i in range(task_dim)]
 
-    n_tasks = len(pd.unique(rra0[rra0.method==rra0.method.values[0]].task0))
-    tit0 = f'First seed, {n_tasks} test tasks'
+    # n_tasks = len(pd.unique(rra0[rra0.method==rra0.method.values[0]].task0))
+    # tit0 = f'First seed, {n_tasks} test tasks'
     tit1 = f'Test tasks, {len(pd.unique(rra.seed))} seeds'
     if title:
-        tit0 = f'{title}\n({tit0})'
+        # tit0 = f'{title}\n({tit0})'
         tit1 = f'{title}\n({tit1})'
 
     for i in range(task_dim):
-        utils.compare_quantiles(rra0, f'task{i:d}', 'ret', 'method',
-                                xbins=xbins, lab_rotation=40, axs=axs, a0=a)
-        axs.labs(a, tasks[i], 'return', tit0)
-        a += 1
+        # utils.compare_quantiles(rra0, f'task{i:d}', 'ret', 'method',
+        #                         xbins=xbins, lab_rotation=40, axs=axs, a0=a)
+        # axs.labs(a, tasks[i], 'return', tit0)
+        # a += 1
 
         utils.compare_quantiles(rra, f'task{i:d}', 'ret', 'method',
-                                xbins=xbins, lab_rotation=40, axs=axs, a0=a)
+                                xbins=xbins, lab_rotation=40, axs=axs, a0=a, **kwargs)
         axs.labs(a, tasks[i], 'return', tit1)
         a += 1
 
@@ -258,7 +262,7 @@ def cem_analysis(env_name, task_dim, transformation=None, ylim=None,
     if title:
         axs2[0].set_title(title, fontsize=15)
 
-    return ce, c1, c2, axs
+    return ce, c1, c2, axs, axs2
 
 def show_validation_results(dda0, alpha, ci=None):
     axs = utils.Axes(2, 2, (7, 4), fontsize=15)
@@ -280,8 +284,8 @@ def show_validation_results(dda0, alpha, ci=None):
     plt.tight_layout()
     return axs
 
-def show_validation_results_over_seeds(ddm, ddc, alpha, title=None, ci='sd'):
-    axs = utils.Axes(2, 2, (7, 4), fontsize=15)
+def show_validation_results_over_seeds(ddm, ddc, alpha, title=None, ci='sd', axsize=(7, 4)):
+    axs = utils.Axes(2, 2, axsize, fontsize=15)
     a = 0
 
     tit = f'{len(pd.unique(ddm.seed))} seeds'

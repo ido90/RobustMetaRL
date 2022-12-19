@@ -246,7 +246,7 @@ def compare_with_ref(dd, y, x, ref=None, x_ord=None, hue=None, sort_hue=True,
     if len(x_ord) > 4:
         ax.set_xticklabels(ax.get_xticklabels(), rotation=25)
 
-def qgroups(x, nbins=5, apply_labs=True):
+def qgroups(x, nbins=5, apply_labs=True, min_ndigits=0):
     qs = quantile(x, np.linspace(0,1,nbins))
     qs = np.array(qs)
     qs[-1] += 1
@@ -254,7 +254,7 @@ def qgroups(x, nbins=5, apply_labs=True):
     qs[-1] -= 1
     v = g
     if apply_labs:
-        for ndigits in range(4):
+        for ndigits in range(min_ndigits, 7):
             v = [f'{qs[gg]:.{ndigits:d}f}-{qs[gg+1]:.{ndigits:d}f}' for gg in g]
             if len(pd.unique(v)) == nbins-1:
                 break
@@ -265,13 +265,14 @@ def qgroups(x, nbins=5, apply_labs=True):
 
 def compare_quantiles(dd, x, y, hue=None, fac=None, xbins=5, hbins=5, fbins=4,
                       ci=95, box=False, mean=np.mean, copy=True, axs=None, a0=0,
-                      mean_digits=0, lab_rotation=20, axs_args=None, **kwargs):
+                      mean_digits=0, min_x_ndigits=0, lab_rotation=20, axs_args=None,
+                      **kwargs):
     if copy: dd = dd.copy()
     # prepare groups
     xx = x+'_tmp'
     relabel = False
     if xbins and len(np.unique(dd[x]))>2.5*xbins:
-        g, v, relabel = qgroups(dd[x], xbins)
+        g, v, relabel = qgroups(dd[x], xbins, min_ndigits=min_x_ndigits)
         dd[xx] = g
     else:
         dd[xx] = dd[x]
