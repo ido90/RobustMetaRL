@@ -3,10 +3,13 @@ Main scripts to start experiments.
 Takes a flag --env-type (see below for choices) and loads the parameters from the respective config file.
 """
 import argparse
+import logging
+import os
 import warnings
 
 import numpy as np
 import torch
+import wandb
 
 # get configs
 from config import args_khazad_dum_varibad
@@ -206,6 +209,11 @@ def main():
         args.split_batches_by_elbo = True
     # if hasattr(args, 'vae_subsample_decodes') and args.vae_subsample_decodes:
     #     args.split_batches_by_elbo = True
+
+    # init wandb
+    # (use mode="disabled" to disable wandb)
+    if args.use_wandb:
+        wandb.init(project="roml", sync_tensorboard=True, config=args)
 
     # begin training (loop through all passed seeds)
     seed_list = [args.seed] if isinstance(args.seed, int) else args.seed
