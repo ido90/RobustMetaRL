@@ -3,13 +3,14 @@ import json
 import os
 
 import torch
+import wandb
 from torch.utils.tensorboard import SummaryWriter
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 class TBLogger:
-    def __init__(self, args, exp_label):
+    def __init__(self, args, exp_label, use_wandb=False):
         self.output_name = exp_label + '_' + str(args.seed) + '_' + datetime.datetime.now().strftime('_%d:%m_%H:%M:%S')
         try:
             log_dir = args.results_log_dir
@@ -31,6 +32,9 @@ class TBLogger:
                     dir_path_head, dir_path_tail = os.path.split(dir_path_head)
                 os.mkdir(dir_path_head)
                 os.mkdir(dir_path)
+
+        if use_wandb:
+            dir_path = wandb.run.dir
 
         try:
             self.full_output_folder = os.path.join(os.path.join(dir_path, 'logs_{}'.format(args.env_name)),
