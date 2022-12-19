@@ -29,6 +29,38 @@ from environments.parallel_envs import make_vec_envs
 from learner import Learner
 from metalearner import MetaLearner
 
+def generate_exp_label(args):
+    if not args.exp_label:
+        if args.oracle:
+            method = 'oracle'  # 'Oracle'
+        elif args.cem == 0 and args.tail == 0:
+            method = 'varibad'  # 'VariBAD'
+        elif args.cem == 1:
+            method = 'cembad'  # 'RoML'
+        elif args.tail == 1:
+            method = 'cvrbad'  # 'CVaR_MRL'
+        else:
+            raise ValueError(args.cem, args.tail)
+
+        env_name_map = {
+            'KhazadDum-v0':'kd',
+            'HalfCheetahVel-v0':'hcv',
+            'HalfCheetahMass-v0':'hcm',
+            'HalfCheetahBody-v0':'hcb',
+            'HumanoidMass-v0':'humm',
+            'HumanoidBody-v0':'humb',
+        }
+        env_name = env_name_map[args.env_name]
+
+        args.exp_label = f'{env_name}_{method}'
+
+    try:
+        if args.exp_suffix:
+            args.exp_label = f'{args.exp_label}_{args.exp_suffix}'
+    except:
+        warnings.warn(f'Missing attribute args.exp_label')
+
+    return args
 
 def main():
     parser = argparse.ArgumentParser()
@@ -140,6 +172,8 @@ def main():
         args = args_humanoid_body_varibad.get_args(rest_args)
     else:
         raise Exception("Invalid Environment")
+
+    args = generate_exp_label(args)
 
     # warning for deterministic execution
     if args.deterministic_execution:
