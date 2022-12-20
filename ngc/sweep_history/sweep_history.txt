@@ -1,0 +1,11 @@
+
+# f7c_test_fe0_train_sweep # sweeping over ['seed']
+env-type=="cheetah_mass_varibad" exp_label=="hcm_varibad" cem==0
+# c1e_test_fe0_train_sweep # sweeping over ['seed']
+env-type=="cheetah_mass_varibad" exp_label=="hcm_varibad" cem==0
+# ae3_test_fe0_train_sweep # sweeping over ['env-type', 'cem', 'seed']
+use_wandb==True
+# 95e_test_fe0_train_sweep # sweeping over ['env-type', 'cem', 'seed']
+use_wandb==True
+# 5a9_test_fe0_train_sweep # sweeping over ['env-type', 'cem', 'seed']
+use_wandb==True

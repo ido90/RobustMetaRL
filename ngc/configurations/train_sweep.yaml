@@ -1,0 +1,21 @@
+## Program specific info
+program: main.py
+docker_image: nvcr.io/nvidian/nvr-rock/raml
+
+## Sweep specific info
+project: roml
+sweep_name: test
+method: grid
+parameters:
+  use_wandb:
+    value: True
+  env-type:
+    values: [cheetah_vel_varibad, cheetah_mass_varibad]
+  cem:
+    values: [0, 1]
+  seed:
+    values: [50,51,52]
+#  exp_label:
+#    value: hcm_varibad
+
+# Example: python main.py --env-type humanoid_mass_varibad --exp_label humm_varibad --cem 0 --seed 10

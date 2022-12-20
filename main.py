@@ -127,7 +127,14 @@ def main():
     # init wandb
     # (use mode="disabled" to disable wandb)
     if args.use_wandb:
-        wandb.init(project="roml", sync_tensorboard=True, config=args)
+        ngc_run = os.path.isdir('/ws')
+        if ngc_run:
+            ngc_dir = '/result/wandb/'  # args.ngc_path
+            os.makedirs(ngc_dir, exist_ok=True)
+            logging.info('NGC run detected. Setting path to workspace: {}'.format(ngc_dir))
+            wandb.init(project="roml", sync_tensorboard=True, config=args, dir=ngc_dir)
+        else:
+            wandb.init(project="roml", sync_tensorboard=True, config=args)
 
     # begin training (loop through all passed seeds)
     seed_list = [args.seed] if isinstance(args.seed, int) else args.seed

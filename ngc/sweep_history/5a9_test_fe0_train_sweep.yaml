@@ -1,0 +1,46 @@
+## Program specific info
+program: main.py
+docker_image: nvcr.io/nvidian/nvr-rock/raml
+
+## Sweep specific info
+project: roml
+sweep_name: test
+method: grid
+parameters:
+  use_wandb:
+    value: True
+  env-type:
+    values: [cheetah_vel_varibad, cheetah_mass_varibad]
+  cem:
+    values: [0, 1]
+  seed:
+    values: [50,51,52]
+#  exp_label:
+#    value: hcm_varibad
+
+# Example: python main.py --env-type humanoid_mass_varibad --exp_label humm_varibad --cem 0 --seed 10
+
+submit_cmd_docker: docker_cfg/ts bash -c "docker run --runtime=nvidia --net=host -v /tmp/git_commits:/workspace/git_commits --rm nvcr.io/nvidian/nvr-rock/raml /bin/bash -c \"mkdir -p /raid/source_code/; git clone https://ido90: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@github.com/ido90/RobustMetaRL.git --depth=1 /raid/source_code/ || exit 1; cd /raid/source_code/; git remote set-branches origin main; git fetch -v; git checkout fe06fa2 || cd /tmp; source docker_cfg/configuration.sh; wandb login 54aa3773f37573aff0d7322ec7eaebbbf411a599; source docker_cfg/docker_prepare_data.sh; ./docker_cfg/ts jupyter notebook --ip=0.0.0.0 --allow-root --no-browser  --NotebookApp.token='' --NotebookApp.allow_origin='*' --notebook-dir=/workspace; docker_cfg/ts -S 100; wandb agent ido90/roml/y8p5e1me; cp wandb/debug-internal.log /result/wandb_debug-internal.log; cp wandb/debug.log /result/wandb_debug.log;\" "
+submit_cmd_ngc: 'docker_cfg/ts $HOME/ngc batch run --instance dgx1v.32g.1.norm --ace nv-us-west-2 --name ''5a9_test_fe0_ml-model.raml'' --workspace None:/workspace --result /result --image nvcr.io/nvidian/nvr-rock/raml --total-runtime 7d --port 8000 --port 8888 --port 9999 --commandline ''mkdir -p /raid/source_code/; git clone https://ido90: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@github.com/ido90/RobustMetaRL.git --depth=1 /raid/source_code/ || exit 1; cd /raid/source_code/; git remote set-branches origin main; git fetch -v; git checkout fe06fa2 || cd /tmp; source docker_cfg/configuration.sh; wandb login 54aa3773f37573aff0d7322ec7eaebbbf411a599; source docker_cfg/docker_prepare_data.sh; ./docker_cfg/ts jupyter notebook --ip=0.0.0.0 --allow-root --no-browser  --NotebookApp.token='''' --NotebookApp.allow_origin=''*'' --notebook-dir=/workspace; docker_cfg/ts -S 100; wandb agent ido90/roml/y8p5e1me; cp wandb/debug-internal.log /result/wandb_debug-internal.log; cp wandb/debug.log /result/wandb_debug.log;''
+
+  '
+sweep_hash: 5a9_test
+uncommitted_files:
+- .gitignore
+- README.md
+- configurations/launch/default.yaml
+- configurations/train_sweep.yaml
+- docker_cfg/Dockerfile
+- docker_cfg/configuration.sh
+- docker_cfg/docker_prepare_data.sh
+- docker_cfg/inputrc
+- docker_cfg/ngc_prepare_data.sh
+- launch_screenshot.png
+- launch_sweep.py
+- mnist.py
+- requirements.txt
+- sweep_history/sweep_history.txt
+- utils/__init__.py
+- utils/non_nv.py
+- utils/nv.py
+
