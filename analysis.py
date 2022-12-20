@@ -122,7 +122,16 @@ def load_test_data(env_name, env_short, methods, seeds, alpha,
 
         for seed in seeds:
             e = get_dir(base_path, env_short, method, seed)
-            d = pd.read_pickle(f'{base_path}/{e}/{fnm}.pkl')
+            try:
+                d = pd.read_pickle(f'{base_path}/{e}/{fnm}.pkl')
+            except:
+                print(f'Cannot load file: {base_path}/{e}/{fnm}.pkl')
+                if fnm == 'best':
+                    ext = 'mean' if 'varibad' in e else 'cvar'
+                    print(f'\tCompatability: trying to load best_{ext} instead')
+                    d = pd.read_pickle(f'{base_path}/{e}/{fnm}_{ext}.pkl')
+                else:
+                    raise
             d['method'] = method if nm_map is None else nm_map[method]
             d['seed'] = seed
             rr = pd.concat((rr, d))
