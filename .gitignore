@@ -9,3 +9,5 @@ scripts/
 docker/
 tmp_logs/
 outputs/
+others/
+wandb/

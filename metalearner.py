@@ -37,7 +37,7 @@ class MetaLearner:
         self.iter_idx = -1
 
         # initialise tensorboard logger
-        self.logger = TBLogger(self.args, self.args.exp_label)
+        self.logger = TBLogger(self.args, self.args.exp_label, self.args.use_wandb)
 
         # initialise environments
         self.envs = make_vec_envs(env_name=args.env_name, seed=args.seed, num_processes=args.num_processes,
