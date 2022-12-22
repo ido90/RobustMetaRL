@@ -15,7 +15,11 @@ def get_base_path(env_name, base='logs'):
     return f'{base}/logs_{env_name}'
 
 def get_dir(base_path, env_short, method, seed):
-    get_month = lambda s: int(s[s.find(':') + 1:s.find(':') + 3])
+    def get_month(s):
+        if ':' in s:
+            return int(s[s.find(':') + 1:s.find(':') + 3])
+        return int(s[s.find('__')+ 5:s.find('__')+7])
+
     paths = [s for s in os.listdir(base_path)
              if s.startswith(f'{env_short}_{method}_{seed}__')]
     last_month = np.max([get_month(s) for s in paths])
@@ -125,12 +129,14 @@ def load_test_data(env_name, env_short, methods, seeds, alpha,
             try:
                 d = pd.read_pickle(f'{base_path}/{e}/{fnm}.pkl')
             except:
-                print(f'Cannot load file: {base_path}/{e}/{fnm}.pkl')
-                if fnm == 'best':
+                # backward compatibility: saved names were changed
+                print(f'Cannot load file: {base_path}/{e}/{fnm}.pkl', end='')
+                if fnm.endswith('best'):
                     ext = 'mean' if 'varibad' in e else 'cvar'
-                    print(f'\tCompatability: trying to load best_{ext} instead')
+                    print(f'; trying to load best_{ext} instead')
                     d = pd.read_pickle(f'{base_path}/{e}/{fnm}_{ext}.pkl')
                 else:
+                    print()
                     raise
             d['method'] = method if nm_map is None else nm_map[method]
             d['seed'] = seed

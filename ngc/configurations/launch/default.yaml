@@ -1,0 +1,85 @@
+#################################################################
+# You MUST edit the following fields, in a new project:
+#    git.clone_url
+#    ngc.workspace
+#    ngc.job_name
+# Editing other arguments is optional
+#################################################################
+
+git:
+  # clone_url: in gitlab, extract the token from "Settings -> Repository -> Deploy tokens"
+  #  alternatively, set to null when code is deployed by uploading to workspace, rather than git clone
+  clone_url: https://ido90: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@github.com/ido90/RobustMetaRL.git
+  commit_archive_dir: git_commits
+
+ngc:
+  workspace: null
+  job_name: "{sweep_hash}_{commit}_ml-model.raml"
+  num_gpus: 1
+  ngc_instance: "dgx1v.32g.{num_gpus}.norm"
+  upload_timeout: 300 # code upload timeout in seconds
+  run_cmd_ngc: >
+    docker_cfg/ts $HOME/ngc batch run
+    --instance {ngc_instance}
+    --ace nv-us-west-2
+    --name '{job_name}'
+    --workspace {workspace}:/workspace
+    --result /result
+    --image {docker_image}
+    --total-runtime 7d
+    --port 8000 --port 8888 --port 9999
+    --commandline '{agent_cmd}'
+  #  prefix for commandline, when calling the experiment_commandline on NGC
+  prefix_agent_commandline_ngc: "{webhost_cmd}; source docker_cfg/ngc_prepare_data.sh"
+
+docker:
+  #  command line template for running the sweep inside a docker image
+#  run_cmd_docker: docker_cfg/ts bash -c "docker run --runtime=nvidia --net=host --rm {docker_image} /bin/bash -c \"{agent_cmd}\" "
+  run_cmd_docker: docker_cfg/ts bash -c "docker run --runtime=nvidia --net=host -v /tmp/{commit_archive_dir}:/workspace/{commit_archive_dir} --rm {docker_image} /bin/bash -c \"{agent_cmd}\" "
+
+  #  prefix for commandline, when calling the experiment_commandline on the local docker image
+  prefix_agent_commandline_docker: "source docker_cfg/docker_prepare_data.sh"
+
+# directory to clone the code into
+image_source_code_dir: "/raid/source_code/"
+
+experiment_commandline: >
+  mkdir -p {source_dir}; {cmd_clone}; {cmd_checkout};
+  source docker_cfg/configuration.sh;
+  {wandb_login};
+  {prefix_agent_commandline};
+  {jupyter_cmd};
+  docker_cfg/ts -S 100;
+  {sweep_cmd};
+  cp wandb/debug-internal.log /result/wandb_debug-internal.log;
+  cp wandb/debug.log /result/wandb_debug.log;
+
+#### Explaining the above experiment commandline
+#  mkdir -p {source_dir};                               # mkdir for source code
+#  {cmd_clone}; {cmd_checkout};                         # clone and checkout code to source_dir
+#  source docker_cfg/configuration.sh;                  # install linux apps and python requirements
+#  {wandb_login};                                       # login with wandb API key
+#  {prefix_agent_commandline};                          # calling additional commands before executing sweep (e.g. source ngc_prepare_data.sh)
+#  {jupyter_cmd};                                       # start a jupyter notebook server in the background
+#  {webhost_cmd};                                       # start a webhost in the background
+#  docker_cfg/ts -S 100;                                # set task-spooler with up to 100 concurrent jobs
+#  {sweep_cmd};                                         # call the sweep agent
+#  cp wandb/debug-internal.log /result/wandb_debug-internal.log; # copy w&b logs to /results
+#  cp wandb/debug.log /result/wandb_debug.log;                   # copy w&b logs to /results
+#### TIP:
+#  If there are free resources to utilize, you can make multiple "docker_cfg/ts {sweep_cmd};" calls,
+#  before the last {sweep_cmd} call. This will execute additional instances of the sweep agent in the background.
+
+
+# dirname to save submitted sweep yamls
+sweep_history_dir: "sweep_history"
+
+# dirnames and filenames to ignore when checking if the project is uncommitted
+ignore_uncommited_dirs: "configurations,sweep_history,README.md"
+
+# W&B API Key
+# Options: default|none|LOGINKEY
+#    default: taking the login API key from local $HOME/.netrc
+#    none: don't use w&b login
+#    APIKEY: specifying the login API key
+wandb_key: default
