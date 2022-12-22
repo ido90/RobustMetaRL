@@ -129,6 +129,7 @@ def load_test_data(env_name, env_short, methods, seeds, alpha,
             try:
                 d = pd.read_pickle(f'{base_path}/{e}/{fnm}.pkl')
             except:
+                # backward compatibility: saved names were changed
                 print(f'Cannot load file: {base_path}/{e}/{fnm}.pkl', end='')
                 if fnm.endswith('best'):
                     ext = 'mean' if 'varibad' in e else 'cvar'
