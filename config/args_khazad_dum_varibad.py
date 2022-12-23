@@ -12,7 +12,7 @@ def get_args(rest_args):
     parser.add_argument('--valid_tasks', type=int, default=256, help='number of validation tasks')
     parser.add_argument('--test_tasks', type=int, default=3000, help='number of test tasks')
     parser.add_argument('--max_rollouts_per_task', type=int, default=4, help='number of MDP episodes for adaptation')
-    parser.add_argument('--exp_label', default='varibad', help='label (typically name of method)')
+    parser.add_argument('--exp_label', default='', help='label (typically name of method)')
     parser.add_argument('--exp_suffix', default='', help='additional label suffix')
     parser.add_argument('--env_name', default='KhazadDum-v0', help='environment to train on')
 
