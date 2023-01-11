@@ -11,8 +11,6 @@ KhazadDum: a gym environment where the agent needs to cross an abyss using eithe
 a near narrow bridge or a far wide bridge. The former is faster but has a higher
 probability of falling due to the control-noise.
 Shall the agent pass?
-
-Written by Ido Greenberg, 2022.
 '''
 
 import random
