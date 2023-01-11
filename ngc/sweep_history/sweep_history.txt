@@ -9,3 +9,5 @@ use_wandb==True
 use_wandb==True
 # 5a9_test_fe0_train_sweep # sweeping over ['env-type', 'cem', 'seed']
 use_wandb==True
+# b40_kd_roml_with_thresh_b63_train_sweep # sweeping over ['seed']
+use_wandb==True env-type=="khazad_dum_varibad" exp_label=="kd_cembad_th" cem==3
