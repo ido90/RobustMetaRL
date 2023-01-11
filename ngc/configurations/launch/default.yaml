@@ -13,7 +13,7 @@ git:
   commit_archive_dir: git_commits
 
 ngc:
-  workspace: null
+  workspace: Eli_general
   job_name: "{sweep_hash}_{commit}_ml-model.raml"
   num_gpus: 1
   ngc_instance: "dgx1v.32g.{num_gpus}.norm"
