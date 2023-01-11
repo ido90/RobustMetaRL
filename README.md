@@ -1,2 +1,43 @@
-# RobustMetaRL
-A variant of Varibad that is robust to difficult tasks
+# Robust Meta Reinforcement Learning (RoML)
+
+This repo implements RoML on top of the [VariBAD](https://arxiv.org/abs/1910.08348) algorithm for meta reinforcement learning.
+
+## What is RoML?
+* **Reinforcement Learning (RL)** aims to learn a policy that makes decisions and maximizes the cumulative rewards (AKA returns) within a given environment.
+* **Meta-RL** aims to learn a "meta-policy" that can adapt quickly to new environments (AKA tasks).
+* **Robust Meta RL (RoML)** is a meta-algorithm that takes a meta-RL baseline algorithm, and generates a robust version of this baseline.
+
+#### Robustness in what sense?
+RoML optimizes the returns of the high-risk tasks instead of the average task.
+Specifically, it focuses on the $\alpha$% lowest-return tasks in the task-space, where the robustness level $\alpha\in[0,1]$ is controlled by the user.
+Formally, this objective is defined as the [Conditional Value at Risk](https://en.wikipedia.org/wiki/Expected_shortfall) (CVaR) of the returns over the tasks.
+
+#### How does RoML work?
+During meta-training, RoML uses the [Cross Entropy Method](http://web.mit.edu/6.454/www/www_fall_2003/gew/CEtutorial.pdf) (CEM) to modify the selection of tasks, aiming to sample tasks whose expected return is among the worst $\alpha$%.
+
+TODO figures
+
+## How to reproduce the experiments of the paper?
+
+To train the meta-policies, download this repo and run:
+
+`python main.py --env-type ENV --seed 0 1 2 3 4`
+* Replace `ENV` with the desired environment: `khazad_dum_varibad`, `cheetah_vel_varibad`, `cheetah_mass_varibad`, `cheetah_body_varibad` or `humanoid_mass_varibad`.
+* The line above runs the baseline VariBAD algorithm. For RoML add `--cem 1`. For CVaR-ML (defined in the paper) add `--tail 1` (without `--cem`).
+* To reproduce the full experiments of the paper, add seeds up to 29.
+
+To process the results after training, use the module `analysis.py` as demonstrated in the notebooks in this repo (`.ipynb` files).
+
+## How to use RoML with another meta-RL baseline (instead of VariBAD)
+
+The most convenient way is probably to **use the baseline algorithm implementation** (as we did with [VariBAD](https://github.com/lmzintgraf/varibad)), and just **modify the process of task selection** during meta-training.
+This includes:
+1. Create a CEM sampler before training (e.g., using the [Dynamic CEM package](https://pypi.org/project/cross-entropy-method/)).
+2. When choosing the tasks, use the CEM to do the sampling.
+3. After running the tasks, update the CEM with the resulted returns.
+
+**For example, search "cem" in the module `metalearner.py` in this repo.**
+
+Important implementation notes:
+* Only modify task sampling in training - not in testing.
+* The CEM modifies the distribution from which the tasks are selected. For this, the user must define in advance a parametric family of distributions over which the CEM operates, as explained in the CEM package documentation. For example, if the tasks are defined within a bounded interval, we might use Beta distribution; or if the tasks are defined by positive numbers, we could use the exponential distribution. See examples in the module `cross_entropy_sampler.py` in this repo.
