@@ -18,7 +18,7 @@ cp docker_cfg/inputrc /root/.inputrc
 cp docker_cfg/ts /bin/
 
 #### Install requirements
-pip install -r requirements.txt
+#pip install -r requirements.txt
 
 #### Useful aliases and bash functions
 # gpus status
