@@ -5,6 +5,8 @@ Used for on-policy rollout storages.
 """
 import numpy as np
 import torch
+import utils
+from general_utils import quantile
 from torch.utils.data.sampler import BatchSampler, SubsetRandomSampler
 
 from utils import helpers as utl
@@ -127,6 +129,8 @@ class OnlineStorage(object):
                latent_logvar=None,
                #
                alpha_thresh=None,
+               weights=None,
+               q_ref=None,
                ):
         self.prev_state[self.step + 1].copy_(state)
         if self.args.pass_belief_to_policy:
@@ -150,12 +154,22 @@ class OnlineStorage(object):
         self.done[self.step + 1].copy_(done)
         self.step = (self.step + 1) % self.num_steps
 
+        sample_size = None
         if alpha_thresh is not None and self.step == 0:
             # mark all episodes as bad except for bottom alpha returns
             returns = self.rewards_raw.sum(dim=0)[:, 0]
-            q = torch.quantile(returns, alpha_thresh, dim=0).item()
+            if q_ref is not None:
+                q = max(q_ref, returns.min().item())
+            elif weights is None:
+                q = torch.quantile(returns, alpha_thresh, dim=0).item()
+            else:
+                q = quantile(returns.cpu().numpy(), alpha_thresh, weights,
+                             estimate_underlying_quantile=True)
             high_rets = returns > q
+            sample_size = 1 - high_rets.float().mean().item()
             self.bad_masks[:, high_rets, :] = 0
+            # print(alpha_thresh, weights, q, sample_size)
+        return sample_size
 
     def after_update(self):
         self.prev_state[0].copy_(self.prev_state[-1])

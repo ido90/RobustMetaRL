@@ -100,6 +100,7 @@ class MetaLearner:
         self.rr = dict(iter=[], task_id=[], ep=[], ret=[], info=[])
         for i in range(self.args.task_dim):
             self.rr[f'task{i:d}'] = []
+        self.effective_sample_sizes = []
         self.best_mean_return = -np.inf
         self.best_mean_iter = -1
         self.best_cvar_return = -np.inf
@@ -185,7 +186,12 @@ class MetaLearner:
         start_time = time.time()
 
         # reset environments
-        prev_state, belief, task = utl.reset_env(self.envs, self.args, cem=self.cem)
+        tasks_weights = None
+        tmp = utl.reset_env(self.envs, self.args, cem=self.cem, return_weights=self.args.cem==3)
+        if self.args.cem == 3:
+            prev_state, belief, task, tasks_weights = tmp
+        else:
+            prev_state, belief, task = tmp
 
         # insert initial observation / embeddings to rollout storage
         self.policy_storage.prev_state[0].copy_(prev_state)
@@ -272,16 +278,22 @@ class MetaLearner:
                     if self.cem is not None:
                         for r in self.envs.get_return():
                             self.cem.update(r, save=f'logs/models/{self.cem.title}')
-                    next_state, belief, task = utl.reset_env(self.envs, self.args,
-                                                             indices=done_indices, state=next_state,
-                                                             cem=self.cem)
+                    tmp = utl.reset_env(self.envs, self.args,
+                                        indices=done_indices, state=next_state,
+                                        cem=self.cem, return_weights=self.args.cem==3)
+                    if self.args.cem == 3:
+                        prev_state, belief, task, tasks_weights = tmp
+                    else:
+                        prev_state, belief, task = tmp
 
                 # TODO: deal with resampling for posterior sampling algorithm
                 #     latent_sample = latent_sample
                 #     latent_sample[i] = latent_sample[i]
 
                 # add experience to policy buffer
-                self.policy_storage.insert(
+                q_ref = None  # estimate quantile from current batch
+                # q_ref = self.cem.ref_quantile[-1] if self.cem and self.cem.ref_quantile else None  # use the CEM quantile estimation
+                sample_size = self.policy_storage.insert(
                     state=next_state,
                     belief=belief,
                     task=task,
@@ -297,7 +309,11 @@ class MetaLearner:
                     latent_mean=latent_mean,
                     latent_logvar=latent_logvar,
                     alpha_thresh=alpha_thresh,
+                    weights=tasks_weights,
+                    q_ref=q_ref,
                 )
+                if sample_size is not None:
+                    self.effective_sample_sizes.append(sample_size)
 
                 prev_state = next_state
 
@@ -334,12 +350,12 @@ class MetaLearner:
         self.envs.close()
 
     def get_tail_level(self):
-        if self.args.tail == 0:
-            return None
-        elif self.args.tail == 1:
+        if self.args.tail == 1 or self.args.cem == 3:
             return self.args.alpha
         elif self.args.tail == 2:
             return self.get_soft_alpha()
+        elif self.args.tail == 0:
+            return None
         raise ValueError(self.args.tail)
 
     def get_soft_alpha(self):
@@ -575,6 +591,7 @@ class MetaLearner:
                 del self.rr['info']
             rr = pd.DataFrame(self.rr)
             pd.to_pickle(rr, f'{self.logger.full_output_folder}/res.pkl')
+            pd.to_pickle(self.effective_sample_sizes, f'{self.logger.full_output_folder}/sample_sizes.pkl')
 
         # --- save models ---
 

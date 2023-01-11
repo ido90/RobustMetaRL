@@ -8,6 +8,7 @@ import seaborn as sns
 import cross_entropy_sampler as cem
 import general_utils as utils
 
+SAMPLE_FILE = 'sample_sizes'
 TRAIN_FILE = 'res'
 TEST_FILE = 'test_res'
 
@@ -58,6 +59,26 @@ def get_cvar_fun(alpha):
     def cvar(x):
         return np.mean(sorted(x)[:int(np.ceil(alpha*len(x)))])
     return cvar
+
+def load_sample_sizes(env_name, env_short, methods, seeds, nm_map=None):
+    base_path = get_base_path(env_name)
+    ss = pd.DataFrame()
+    for method in methods:
+        for seed in seeds:
+            e = get_dir(base_path, env_short, method, seed)
+            try:
+                s = pd.read_pickle(f'{base_path}/{e}/{SAMPLE_FILE}.pkl')
+            except:
+                continue
+            s = pd.DataFrame(dict(
+                iter=range(len(s)),
+                sample_size=s,
+                method=method if nm_map is None else nm_map[method],
+                seed=seed,
+            ))
+            ss = pd.concat((ss, s))
+    ss.reset_index(drop=True, inplace=True)
+    return ss
 
 def load_train_data(env_name, env_short, methods, seeds, alpha,
                     align_progress=False, nm_map=None):
