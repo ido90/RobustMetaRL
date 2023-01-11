@@ -1,4 +1,8 @@
  ## Program specific info
+ command:
+   - usr/bin/python3
+   - ${program}
+   - ${args}
 program: main.py
 docker_image: nvcr.io/nvidian/nvr-rock/raml
 
