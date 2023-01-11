@@ -2,6 +2,14 @@
 
 This repo implements RoML on top of the [VariBAD](https://arxiv.org/abs/1910.08348) algorithm for meta reinforcement learning.
 
+| <img src="media/HalfCheetahMass.gif" width="320"> <img src="media/HumanoidMass.gif" width="320"> |
+| :--: |
+| A sample of test tasks in HalfCheetah (left) and Humanoid (right). In both examples, the task corresponds to high body mass, which is difficult to control and typically leads to lower returns. Within each figure, the right meta-agent was trained by RoML and the left one by the baseline VariBAD. In both environments, RoML learned to handle the high mass by leaning forward and letting gravity do the hard work, leading to higher velocities than VariBAD. |
+
+| <img src="media/KhazadDum_VariBAD.png" width="200"> <img src="media/KhazadDum_RoML.png" width="200"> |
+| :--: |
+| In the bridge environment of [Khazad-Dum](https://tolkiengateway.net/wiki/Bridge_of_Khazad-d%C3%BBm), VariBAD (left) attempts to take the short path through the bridge, but sometimes falls to the abyss. RoML (right) goes around and avoids the falling risk. |
+
 ## What is RoML?
 * **Reinforcement Learning (RL)** aims to learn a policy that makes decisions and maximizes the cumulative rewards (AKA returns) within a given environment.
 * **Meta-RL** aims to learn a "meta-policy" that can adapt quickly to new environments (AKA tasks).
@@ -14,8 +22,6 @@ Formally, this objective is defined as the [Conditional Value at Risk](https://e
 
 #### How does RoML work?
 During meta-training, RoML uses the [Cross Entropy Method](http://web.mit.edu/6.454/www/www_fall_2003/gew/CEtutorial.pdf) (CEM) to modify the selection of tasks, aiming to sample tasks whose expected return is among the worst $\alpha$%.
-
-TODO figures
 
 ## How to reproduce the experiments of the paper?
 
