@@ -4,7 +4,7 @@ This repo implements RoML on top of the [VariBAD](https://arxiv.org/abs/1910.083
 
 | <img src="media/HalfCheetahMass.gif" width="320"> <img src="media/HumanoidMass.gif" width="320"> |
 | :--: |
-| A sample of test tasks in HalfCheetah (left) and Humanoid (right). In both examples, the task corresponds to high body mass, which is difficult to control and typically leads to lower returns. Within each figure, the right meta-agent was trained by RoML and the left one by the baseline VariBAD. In both environments, **RoML learned to handle the high mass by leaning forward and letting gravity do the hard work, leading to higher velocities than VariBAD**. |
+| A sample of test tasks in HalfCheetah (left) and Humanoid (right). In both examples, the task corresponds to high body mass, which is difficult to control and typically leads to lower scores. Within each figure, the right meta-agent was trained by RoML and the left one by the baseline VariBAD. In both environments, **RoML learned to handle the high mass by leaning forward and letting gravity do the hard work, leading to higher velocities than VariBAD**. |
 
 | <img src="media/KhazadDum_VariBAD.png" width="200"> <img src="media/KhazadDum_RoML.png" width="200"> |
 | :--: |
