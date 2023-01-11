@@ -371,7 +371,7 @@ def print_sweep_info(sweep_cfg, sweep_name, opts: SweepOpts, countdown=30):
 
     # visual diff to last yaml sweep
     diff_to_latest_yaml(opts, sweep_cfg['sweep_name'], opts.sweep_yaml)
-
+    countdown =1
     count_down(countdown,
                msg=red('\nWaiting for %d seconds. press ctrl-C to break, or any key to continue' % countdown),
                cont_on_any_key=True)
