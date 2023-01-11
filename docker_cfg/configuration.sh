@@ -24,7 +24,7 @@ cp docker_cfg/ts /bin/
 # gpus status
 alias gpust='nvidia-smi | grep -E "[0-9]+C.*[0-9]+W"'
 alias cpr='rsync --progress'
-
+unset WANDB_API_KEY
 # gpu queues
 for i in {0..7}
 do
