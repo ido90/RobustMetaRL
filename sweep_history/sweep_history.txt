@@ -23,3 +23,5 @@ use_wandb==True env-type=="khazad_dum_varibad" exp_label=="kd_cembad_th" cem==3
 use_wandb==True env-type=="khazad_dum_varibad" exp_label=="kd_cembad_th" cem==3
 # 4d9_kd_roml_with_thresh_7c7_train_sweep # sweeping over ['seed']
 use_wandb==True env-type=="khazad_dum_varibad" exp_label=="kd_cembad_th" cem==3
+# 7cc_kd_roml_with_thresh_ece_train_sweep # sweeping over ['seed']
+use_wandb==True env-type=="khazad_dum_varibad" exp_label=="kd_cembad_th" cem==3
