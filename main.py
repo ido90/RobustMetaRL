@@ -40,6 +40,8 @@ def generate_exp_label(args):
             'HalfCheetahBody-v0':'hcb',
             'HumanoidMass-v0':'humm',
             'HumanoidBody-v0':'humb',
+            'AntGoal-v0': 'antg',
+            'AntMass-v0': 'antm'
         }
         env_name = env_name_map[args.env_name]
 
