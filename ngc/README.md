@@ -51,7 +51,7 @@ where:
 
 When launching a sweep, the system first displays a summary of the sweep-job and a visual diff to the last sweep-job that was submitted.
 Then it waits up to 30 seconds for the user to approve the job.
-![image](launch_screenshot.png)
+![image](../launch_screenshot.png)
 You can use the hash code in the sweep name (e.g. `4d9`) to monitor or kill the jobs in this sweep when using `pyngc` project. 
 
 ## Custom project configuration

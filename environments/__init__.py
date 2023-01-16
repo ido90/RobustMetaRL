@@ -30,6 +30,14 @@ register(
 )
 
 register(
+    'AntMass-v0',
+    entry_point='environments.wrappers:mujoco_wrapper',
+    kwargs={'entry_point': 'environments.mujoco.ant_mass:AntMassEnv',
+            'max_episode_steps': 200},
+    max_episode_steps=200
+)
+
+register(
     'HalfCheetahDir-v0',
     entry_point='environments.wrappers:mujoco_wrapper',
     kwargs={'entry_point': 'environments.mujoco.half_cheetah_dir:HalfCheetahDirEnv',

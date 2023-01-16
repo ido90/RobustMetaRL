@@ -51,12 +51,28 @@ def get_cem_sampler(env_name, seed, oracle=False, alpha=0.05, cem_type=1):
                 f'No oracle-CEM implemented for HumanoidBody-v0.')
         else:
             return LogBeta(
-                0.5 * np.ones(4), ref_alpha=alpha, batch_size=8*16,
+                0.5 * np.ones(3), ref_alpha=alpha, batch_size=8*16,
                 n_orig_per_batch=0.2, soft_update=0.5, title=f'hum_body_{sfx}',
-                titles=('mass', 'inertia', 'damping', 'head_size'))
+                titles=('mass', 'damping', 'head_size'))
                 # titles=('strength', 'mass'))
                 # titles=('butt_mass', 'foot_mass', 'hand_mass', 'butt_len', 'foot_len', 'hand_len'))
                 # (butt = either butt or pelvis)
+    elif env_name == 'AntGoal-v0':
+        if oracle:
+            raise NotImplementedError(
+                f'No oracle-CEM implemented for AntGoal-v0.')
+        else:
+            return CemCircle(
+                0.5*np.ones(2), ref_alpha=alpha, batch_size=8*16,
+                n_orig_per_batch=0.2, soft_update=0.5, title=f'ant_goal_{sfx}')
+    elif env_name == 'AntMass-v0':
+        if oracle:
+            raise NotImplementedError(
+                f'No oracle-CEM implemented for AntMass-v0.')
+        else:
+            return LogBeta1D(
+                0.5, ref_alpha=alpha, batch_size=8*16,
+                n_orig_per_batch=0.2, soft_update=0.5, title=f'ant_mass_{sfx}')
     elif env_name == 'KhazadDum-v0':
         if oracle:
             raise NotImplementedError(
@@ -203,3 +219,33 @@ class CemExp(cem.CEM):
         w = np.array(weights)
         s = np.array(samples)
         return np.mean(w*s)/np.mean(w)
+
+class CemCircle(cem.CEM):
+    def __init__(self, *args, eps=0.0, **kwargs):
+        super(CemCircle, self).__init__(*args, **kwargs)
+        self.eps = eps
+        self.default_dist_titles = ('mean_r', 'mean_theta')
+        self.default_samp_titles = ('r', 'theta')
+
+    def do_sample(self, phi):
+        r0, theta0 = np.random.beta(2*phi, 2-2*phi)
+        theta = 2*np.pi*theta0
+        r = 5*np.sqrt(r0)
+        return np.array((r*np.cos(theta), r*np.sin(theta)))
+
+    def xy2rt(self, x, y):
+        return (x**2+y**2)/(5**2), \
+               (np.arctan2(y, x)+np.pi) / (2*np.pi)
+
+    def pdf(self, x, phi):
+        x = self.xy2rt(*x)
+        return stats.beta.pdf(np.clip(x, self.eps, 1-self.eps),
+                              2*phi, 2-2*phi).prod()
+
+    def update_sample_distribution(self, samples, weights):
+        w = np.array(weights)
+        s = np.stack([self.xy2rt(*ss) for ss in samples])
+
+        wmean = np.mean(w)
+        w = np.repeat(w[:, np.newaxis], s.shape[1], axis=1)
+        return np.clip(np.mean(w*s, axis=0)/wmean, self.eps, 1-self.eps)

@@ -14,8 +14,8 @@ import wandb
 # get configs
 from config import args_khazad_dum_varibad
 from config.mujoco import args_cheetah_vel_rl2, args_cheetah_vel_varibad, args_cheetah_mass_varibad, \
-    args_cheetah_body_varibad,  args_ant_goal_rl2, args_ant_goal_varibad, args_humanoid_mass_varibad, \
-    args_humanoid_body_varibad
+    args_cheetah_body_varibad,  args_ant_goal_rl2, args_ant_goal_varibad, args_ant_mass_varibad, \
+    args_humanoid_mass_varibad, args_humanoid_body_varibad
 from environments.parallel_envs import make_vec_envs
 from learner import Learner
 from metalearner import MetaLearner
@@ -79,10 +79,12 @@ def main():
     # - AntGoal -
     elif env == 'ant_goal_varibad':
         args = args_ant_goal_varibad.get_args(rest_args)
+    elif env == 'ant_mass_varibad':
+        args = args_ant_mass_varibad.get_args(rest_args)
     elif env == 'ant_goal_rl2':
         args = args_ant_goal_rl2.get_args(rest_args)
-        #
-        # - HumanoidBody -
+    #
+    # - HumanoidBody -
     elif env == 'humanoid_mass_varibad':
         args = args_humanoid_mass_varibad.get_args(rest_args)
     elif env == 'humanoid_body_varibad':
