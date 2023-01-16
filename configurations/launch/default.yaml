@@ -16,7 +16,7 @@ ngc:
   workspace: Eli_general
   job_name: "{sweep_hash}_{commit}_ml-model.raml"
   num_gpus: 1
-  ngc_instance: "dgx1v.32g.{num_gpus}.norm"
+  ngc_instance: "dgx1v.16g.{num_gpus}.norm"
   upload_timeout: 300 # code upload timeout in seconds
   run_cmd_ngc: >
     docker_cfg/ts $HOME/ngc batch run
@@ -45,8 +45,8 @@ image_source_code_dir: "/raid/source_code/"
 
 experiment_commandline: >
   mkdir -p {source_dir}; {cmd_clone}; {cmd_checkout};
-  source docker_cfg/configuration.sh;
   unset WANDB_API_KEY;
+  source docker_cfg/configuration.sh;
   {wandb_login};
   {prefix_agent_commandline};
   {jupyter_cmd};
