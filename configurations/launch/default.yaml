@@ -46,6 +46,7 @@ image_source_code_dir: "/raid/source_code/"
 experiment_commandline: >
   mkdir -p {source_dir}; {cmd_clone}; {cmd_checkout};
   source docker_cfg/configuration.sh;
+  unset WANDB_API_KEY;
   {wandb_login};
   {prefix_agent_commandline};
   {jupyter_cmd};

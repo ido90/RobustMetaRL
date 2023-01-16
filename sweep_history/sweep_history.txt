@@ -25,3 +25,39 @@ use_wandb==True env-type=="khazad_dum_varibad" exp_label=="kd_cembad_th" cem==3
 use_wandb==True env-type=="khazad_dum_varibad" exp_label=="kd_cembad_th" cem==3
 # 7cc_kd_roml_with_thresh_ece_train_sweep # sweeping over ['seed']
 use_wandb==True env-type=="khazad_dum_varibad" exp_label=="kd_cembad_th" cem==3
+# b6a_kd_roml_with_thresh_fd2_train_sweep # sweeping over ['seed']
+use_wandb==True env-type=="khazad_dum_varibad" exp_label=="kd_cembad_th" cem==3
+# f18_kd_roml_with_thresh_c59_train_sweep # sweeping over ['seed']
+use_wandb==True env-type=="khazad_dum_varibad" exp_label=="kd_cembad_th" cem==3
+# 9a1_kd_roml_with_thresh_c59_train_sweep # sweeping over ['seed']
+use_wandb==True env-type=="khazad_dum_varibad" exp_label=="kd_cembad_th" cem==3
+# 18f_kd_roml_with_thresh_c59_train_sweep # sweeping over ['seed']
+use_wandb==True env-type=="khazad_dum_varibad" exp_label=="kd_cembad_th" cem==3
+# 7f1_kd_cvrbad_repeat_c59_train_sweep # sweeping over ['seed']
+use_wandb==True env-type=="khazad_dum_varibad" exp_label=="kd_cvrbad2" tail==1
+# 6f2_kd_cvrbad_repeat_c59_train_sweep # sweeping over ['seed']
+use_wandb==True env-type=="khazad_dum_varibad" exp_label=="kd_cvrbad2" tail==1
+# 24d_kd_batch_base_c59_train_sweep # sweeping over ['seed']
+use_wandb==True env-type=="khazad_dum_varibad" exp_label=="kd_cvrbad_alpha2" alpha==0.1 tail==1
+# 3d2_kd_batch_base_c59_train_sweep # sweeping over ['seed']
+use_wandb==True env-type=="khazad_dum_varibad" exp_label=="kd_cembad_alpha" alpha==0.05 cem==1
+# e8a_kd_batch_base_c59_train_sweep # sweeping over ['seed']
+use_wandb==True env-type=="khazad_dum_varibad" exp_label=="kd_cembad_alpha2" alpha==0.1 cem==1
+# ff6_kd_batch_base_c59_train_sweep # sweeping over ['seed']
+use_wandb==True env-type=="khazad_dum_varibad" exp_label=="kd_cvrbad_ent1" policy_entropy_coef==0.01 tail==1
+# 8a5_kd_batch_base_c59_train_sweep # sweeping over ['seed']
+use_wandb==True env-type=="khazad_dum_varibad" exp_label=="kd_cembad_ent1" policy_entropy_coef==0.01 cem==1
+# a2f_kd_batch_base_c59_train_sweep # sweeping over ['seed']
+use_wandb==True env-type=="khazad_dum_varibad" exp_label=="kd_cvrbad_ent2" policy_entropy_coef==0.1 tail==1
+# ab8_kd_batch_base_c59_train_sweep # sweeping over ['seed']
+use_wandb==True env-type=="khazad_dum_varibad" exp_label=="kd_cembad_ent2" policy_entropy_coef==0.1 cem==1
+# 3d0_kd_batch_base_c59_train_sweep # sweeping over ['seed']
+use_wandb==True env-type=="khazad_dum_varibad" exp_label=="kd_cvrbad_batch" num_processes==32 tail==1
+# 7ec_kd_batch_base_c59_train_sweep # sweeping over ['seed']
+use_wandb==True env-type=="khazad_dum_varibad" exp_label=="kd_cembad_batch" num_processes==32 cem==1
+# de8_kd_batch_base_c59_train_sweep # sweeping over ['seed']
+use_wandb==True env-type=="khazad_dum_varibad" exp_label=="kd_cvrbad_alpha" alpha==0.05 tail==1
+# 89a_kd_batch_base_c59_train_sweep # sweeping over ['seed']
+cem==1 env-type=="khazad_dum_varibad" exp_label=="kd_cembad_ent1" policy_entropy_coef==0.01 use_wandb==True
+# 32d_kd_batch_base_c59_train_sweep # sweeping over ['seed']
+cem==1 env-type=="khazad_dum_varibad" exp_label=="kd_cembad_batch" num_processes==32 use_wandb==True
