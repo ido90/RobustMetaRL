@@ -8,7 +8,7 @@ def get_args(rest_args):
     # --- GENERAL ---
 
     parser.add_argument('--use_wandb', type=bool, default=False, help='use wandb')
-    parser.add_argument('--num_frames', type=int, default=5e6, help='number of frames to train')
+    parser.add_argument('--num_frames', type=int, default=8e6, help='number of frames to train')
     parser.add_argument('--valid_tasks', type=int, default=256, help='number of validation tasks')
     parser.add_argument('--test_tasks', type=int, default=3000, help='number of test tasks')
     parser.add_argument('--max_rollouts_per_task', type=int, default=4, help='number of MDP episodes for adaptation')
@@ -63,7 +63,7 @@ def get_args(rest_args):
 
     # other hyperparameters
     parser.add_argument('--lr_policy', type=float, default=7e-4, help='learning rate (default: 7e-4)')
-    parser.add_argument('--num_processes', type=int, default=16,
+    parser.add_argument('--num_processes', type=int, default=32,
                         help='how many training CPU processes / parallel environments to use (default: 16)')
     parser.add_argument('--policy_num_steps', type=int, default=128,
                         help='number of env steps to do (per process) before updating')
