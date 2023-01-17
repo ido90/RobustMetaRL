@@ -78,6 +78,14 @@ register(
 )
 
 register(
+    'HumanoidVel-v0',
+    entry_point='environments.wrappers:mujoco_wrapper',
+    kwargs={'entry_point': 'environments.mujoco.humanoid_vel:HumanoidVelEnv',
+            'max_episode_steps': 200},
+    max_episode_steps=200
+)
+
+register(
     'HumanoidMass-v0',
     entry_point='environments.wrappers:mujoco_wrapper',
     kwargs={'entry_point': 'environments.mujoco.humanoid_mass:HumanoidMassEnv',

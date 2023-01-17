@@ -36,6 +36,14 @@ def get_cem_sampler(env_name, seed, oracle=False, alpha=0.05, cem_type=1):
                 0.5*np.ones(3), ref_alpha=alpha, batch_size=8*16,
                 n_orig_per_batch=0.2, soft_update=0.5, title=f'hc_body_{sfx}',
                 titles=('mass', 'damping', 'head_size'))
+    elif env_name == 'HumanoidVel-v0':
+        if oracle:
+            raise NotImplementedError(
+                f'No oracle-CEM implemented for HumanoidVel-v0.')
+        else:
+            return CEM_Beta(
+                0.5, vmax=2.5, ref_alpha=alpha, batch_size=8*16,
+                n_orig_per_batch=0.2, soft_update=0.5, title=f'hum_vel_{sfx}')
     elif env_name == 'HumanoidMass-v0':
         if oracle:
             raise NotImplementedError(
@@ -87,7 +95,7 @@ def get_cem_sampler(env_name, seed, oracle=False, alpha=0.05, cem_type=1):
 class CEM_Beta(cem.CEM):
     '''CEM for 1D Beta distribution.'''
 
-    def __init__(self, *args, vmax=7, eps=0.02, **kwargs):
+    def __init__(self, *args, vmax=7.0, eps=0.02, **kwargs):
         super(CEM_Beta, self).__init__(*args, **kwargs)
         self.default_dist_titles = 'beta_mean'
         self.default_samp_titles = 'sample'
