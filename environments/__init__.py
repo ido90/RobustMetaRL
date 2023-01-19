@@ -30,6 +30,14 @@ register(
 )
 
 register(
+    'AntMass-v0',
+    entry_point='environments.wrappers:mujoco_wrapper',
+    kwargs={'entry_point': 'environments.mujoco.ant_mass:AntMassEnv',
+            'max_episode_steps': 200},
+    max_episode_steps=200
+)
+
+register(
     'HalfCheetahDir-v0',
     entry_point='environments.wrappers:mujoco_wrapper',
     kwargs={'entry_point': 'environments.mujoco.half_cheetah_dir:HalfCheetahDirEnv',
@@ -65,6 +73,14 @@ register(
     'HumanoidDir-v0',
     entry_point='environments.wrappers:mujoco_wrapper',
     kwargs={'entry_point': 'environments.mujoco.humanoid_dir:HumanoidDirEnv',
+            'max_episode_steps': 200},
+    max_episode_steps=200
+)
+
+register(
+    'HumanoidVel-v0',
+    entry_point='environments.wrappers:mujoco_wrapper',
+    kwargs={'entry_point': 'environments.mujoco.humanoid_vel:HumanoidVelEnv',
             'max_episode_steps': 200},
     max_episode_steps=200
 )

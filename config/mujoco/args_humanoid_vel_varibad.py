@@ -8,13 +8,13 @@ def get_args(rest_args):
     # --- GENERAL ---
 
     parser.add_argument('--use_wandb', type=bool, default=False, help='use wandb')
-    parser.add_argument('--num_frames', type=int, default=1e8, help='number of frames to train')
+    parser.add_argument('--num_frames', type=int, default=3e7, help='number of frames to train')
     parser.add_argument('--valid_tasks', type=int, default=32, help='number of validation tasks')
     parser.add_argument('--test_tasks', type=int, default=1000, help='number of test tasks')
     parser.add_argument('--max_rollouts_per_task', type=int, default=2, help='number of MDP episodes for adaptation')
     parser.add_argument('--exp_label', default='', help='label (typically name of method)')
     parser.add_argument('--exp_suffix', default='', help='additional label suffix')
-    parser.add_argument('--env_name', default='AntGoal-v0', help='environment to train on')
+    parser.add_argument('--env_name', default='HumanoidVel-v0', help='environment to train on')
 
     parser.add_argument('--alpha', type=float, default=0.05, help='CVaR risk level')
     parser.add_argument('--tail', type=int, default=0, help='learn from all batch / tail / scheduled-tail')
@@ -30,8 +30,8 @@ def get_args(rest_args):
     parser.add_argument('--pass_task_to_policy', type=boolean_argument, default=False, help='condition policy on ground-truth task description')
 
     # using separate encoders for the different inputs ("None" uses no encoder)
-    parser.add_argument('--policy_state_embedding_dim', type=int, default=64)
-    parser.add_argument('--policy_latent_embedding_dim', type=int, default=64)
+    parser.add_argument('--policy_state_embedding_dim', type=int, default=None)
+    parser.add_argument('--policy_latent_embedding_dim', type=int, default=None)
     parser.add_argument('--policy_belief_embedding_dim', type=int, default=None)
     parser.add_argument('--policy_task_embedding_dim', type=int, default=None)
 
@@ -42,10 +42,10 @@ def get_args(rest_args):
     parser.add_argument('--norm_task_for_policy', type=boolean_argument, default=True, help='normalise task input')
     parser.add_argument('--norm_rew_for_policy', type=boolean_argument, default=True, help='normalise rew for RL train')
     parser.add_argument('--norm_actions_pre_sampling', type=boolean_argument, default=False, help='normalise policy output')
-    parser.add_argument('--norm_actions_post_sampling', type=boolean_argument, default=False, help='normalise policy output')
+    parser.add_argument('--norm_actions_post_sampling', type=boolean_argument, default=True, help='normalise policy output')
 
     # network
-    parser.add_argument('--policy_layers', nargs='+', default=[128, 128])
+    parser.add_argument('--policy_layers', nargs='+', default=[512, 256])
     parser.add_argument('--policy_activation_function', type=str, default='tanh', help='tanh/relu/leaky-relu')
     parser.add_argument('--policy_initialisation', type=str, default='orthogonal', help='normc/orthogonal')
     parser.add_argument('--policy_anneal_lr', type=boolean_argument, default=True, help='anneal LR over time')
@@ -55,23 +55,23 @@ def get_args(rest_args):
     parser.add_argument('--policy_optimiser', type=str, default='adam', help='choose: rmsprop, adam')
 
     # PPO specific
-    parser.add_argument('--ppo_num_epochs', type=int, default=2, help='number of epochs per PPO update')
-    parser.add_argument('--ppo_num_minibatch', type=int, default=1, help='number of minibatches to split the data')
+    parser.add_argument('--ppo_num_epochs', type=int, default=4, help='number of epochs per PPO update')
+    parser.add_argument('--ppo_num_minibatch', type=int, default=2, help='number of minibatches to split the data')
     parser.add_argument('--ppo_use_huberloss', type=boolean_argument, default=True, help='use huberloss instead of MSE')
     parser.add_argument('--ppo_use_clipped_value_loss', type=boolean_argument, default=True, help='clip value loss')
-    parser.add_argument('--ppo_clip_param', type=float, default=0.05, help='clamp param')
+    parser.add_argument('--ppo_clip_param', type=float, default=0.1, help='clamp param')
 
     # other hyperparameters
-    parser.add_argument('--lr_policy', type=float, default=1e-3, help='learning rate (default: 7e-4)')
+    parser.add_argument('--lr_policy', type=float, default=0.0007, help='learning rate (default: 7e-4)')
     parser.add_argument('--num_processes', type=int, default=16,
                         help='how many training CPU processes / parallel environments to use (default: 16)')
-    parser.add_argument('--policy_num_steps', type=int, default=200,
+    parser.add_argument('--policy_num_steps', type=int, default=800,
                         help='number of env steps to do (per process) before updating')
     parser.add_argument('--policy_eps', type=float, default=1e-8, help='optimizer epsilon (1e-8 for ppo, 1e-5 for a2c)')
     parser.add_argument('--policy_init_std', type=float, default=1.0, help='only used for continuous actions')
     parser.add_argument('--policy_value_loss_coef', type=float, default=0.5, help='value loss coefficient')
-    parser.add_argument('--policy_entropy_coef', type=float, default=0.01, help='entropy term coefficient')
-    parser.add_argument('--policy_gamma', type=float, default=0.97, help='discount factor for rewards')
+    parser.add_argument('--policy_entropy_coef', type=float, default=0.001, help='entropy term coefficient')
+    parser.add_argument('--policy_gamma', type=float, default=0.99, help='discount factor for rewards')
     parser.add_argument('--policy_use_gae', type=boolean_argument, default=True,
                         help='use generalized advantage estimation')
     parser.add_argument('--policy_tau', type=float, default=0.9, help='gae parameter')
@@ -95,15 +95,15 @@ def get_args(rest_args):
                         help='how many trajectories to use for VAE update')
     parser.add_argument('--tbptt_stepsize', type=int, default=None,
                         help='stepsize for truncated backpropagation through time; None uses max (horizon of BAMDP)')
-    parser.add_argument('--vae_subsample_elbos', type=int, default=None,
+    parser.add_argument('--vae_subsample_elbos', type=int, default=100,
                         help='for how many timesteps to compute the ELBO; None uses all')
-    parser.add_argument('--vae_subsample_decodes', type=int, default=None,
+    parser.add_argument('--vae_subsample_decodes', type=int, default=100,
                         help='number of reconstruction terms to subsample; None uses all')
     parser.add_argument('--vae_avg_elbo_terms', type=boolean_argument, default=False,
                         help='Average ELBO terms (instead of sum)')
     parser.add_argument('--vae_avg_reconstruction_terms', type=boolean_argument, default=False,
                         help='Average reconstruction terms (instead of sum)')
-    parser.add_argument('--num_vae_updates', type=int, default=5,
+    parser.add_argument('--num_vae_updates', type=int, default=10,
                         help='how many VAE update steps to take per meta-iteration')
     parser.add_argument('--pretrain_len', type=int, default=0, help='for how many updates to pre-train the VAE')
     parser.add_argument('--kl_weight', type=float, default=0.1, help='weight for the KL term')
@@ -150,35 +150,28 @@ def get_args(rest_args):
 
     # --- ABLATIONS ---
 
-    # for the VAE
+    parser.add_argument('--single_task_mode', type=boolean_argument, default=False,
+                        help='train policy on one (randomly chosen) environment only')
+    parser.add_argument('--disable_metalearner', type=boolean_argument, default=False,
+                        help='Train feedforward policy')
+    parser.add_argument('--add_nonlinearity_to_latent', type=boolean_argument, default=False,
+                        help='Use relu before feeding latent to policy')
     parser.add_argument('--disable_decoder', type=boolean_argument, default=False,
                         help='train without decoder')
     parser.add_argument('--disable_stochasticity_in_latent', type=boolean_argument, default=False,
                         help='use auto-encoder (non-variational)')
     parser.add_argument('--disable_kl_term', type=boolean_argument, default=False,
                         help='dont use the KL regularising loss term')
-    parser.add_argument('--decode_only_past', type=boolean_argument, default=False,
-                        help='only decoder past observations, not the future')
-    parser.add_argument('--kl_to_gauss_prior', type=boolean_argument, default=False,
-                        help='KL term in ELBO to fixed Gaussian prior (instead of prev approx posterior)')
-
-    # combining vae and RL loss
-    parser.add_argument('--rlloss_through_encoder', type=boolean_argument, default=False,
-                        help='backprop rl loss through encoder')
-    parser.add_argument('--add_nonlinearity_to_latent', type=boolean_argument, default=False,
-                        help='Use relu before feeding latent to policy')
-    parser.add_argument('--vae_loss_coeff', type=float, default=1.0,
-                        help='weight for VAE loss (vs RL loss)')
-
-    # for the policy training
     parser.add_argument('--sample_embeddings', type=boolean_argument, default=False,
                         help='sample embedding for policy, instead of full belief')
-
-    # for other things
-    parser.add_argument('--disable_metalearner', type=boolean_argument, default=False,
-                        help='Train feedforward policy')
-    parser.add_argument('--single_task_mode', type=boolean_argument, default=False,
-                        help='train policy on one (randomly chosen) environment only')
+    parser.add_argument('--rlloss_through_encoder', type=boolean_argument, default=False,
+                        help='backprop rl loss through encoder')
+    parser.add_argument('--vae_loss_coeff', type=float, default=1.0,
+                        help='weight for VAE loss (vs RL loss)')
+    parser.add_argument('--kl_to_gauss_prior', type=boolean_argument, default=False,
+                        help='KL term in ELBO to fixed Gaussian prior (instead of prev approx posterior)')
+    parser.add_argument('--decode_only_past', type=boolean_argument, default=False,
+                        help='only decoder past observations, not the future')
 
     # --- OTHERS ---
 

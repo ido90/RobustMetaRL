@@ -14,7 +14,7 @@ def get_args(rest_args):
     parser.add_argument('--max_rollouts_per_task', type=int, default=2, help='number of MDP episodes for adaptation')
     parser.add_argument('--exp_label', default='', help='label (typically name of method)')
     parser.add_argument('--exp_suffix', default='', help='additional label suffix')
-    parser.add_argument('--env_name', default='AntGoal-v0', help='environment to train on')
+    parser.add_argument('--env_name', default='AntMass-v0', help='environment to train on')
 
     parser.add_argument('--alpha', type=float, default=0.05, help='CVaR risk level')
     parser.add_argument('--tail', type=int, default=0, help='learn from all batch / tail / scheduled-tail')

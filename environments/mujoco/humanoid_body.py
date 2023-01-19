@@ -18,7 +18,7 @@ import random
 class HumanoidBodyEnv(HumanoidEnv):
 
     def __init__(self, max_episode_steps=200, eval_mode=False):
-        self.task_dim = 4
+        self.task_dim = 3
         self._max_episode_steps = max_episode_steps
         self.action_scale = 1  # Mujoco environment initialization takes a step,
         super(HumanoidBodyEnv, self).__init__()
@@ -32,7 +32,6 @@ class HumanoidBodyEnv(HumanoidEnv):
         # save original cheetah properties (tasks are defined as ratios of these)
         self.original_mass = self.model.body_mass.copy()
         self.original_width = self.model.geom_size.copy()
-        self.original_inertia = self.model.body_inertia.copy()
         self.original_damp = self.model.dof_damping.copy()
         self.original_len = self.model.geom_size[2, :].copy()
 
@@ -103,11 +102,9 @@ class HumanoidBodyEnv(HumanoidEnv):
         self.model.geom_size[3:, 0] = task[0] * self.original_width[3:, 0]
         for i in range(len(self.model.body_mass)):
             self.model.body_mass[i] = task[0] * self.original_mass[i]
-        for i in range(len(self.model.body_inertia)):
-            self.model.body_inertia[i] = task[1] * self.original_inertia[i]
         for i in range(len(self.model.dof_damping)):
-            self.model.dof_damping[i] = task[2] * self.original_damp[i]
-        self.model.geom_size[2, :] = task[3] * self.original_len
+            self.model.dof_damping[i] = task[1] * self.original_damp[i]
+        self.model.geom_size[2, :] = task[2] * self.original_len
 
         return task
 

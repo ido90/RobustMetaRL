@@ -1,0 +1,23 @@
+ ## Program specific info
+command:
+   - /usr/bin/python3
+   - ${program}
+   - ${args}
+program: main.py
+docker_image: nvcr.io/nvidian/nvr-rock/raml
+
+## Sweep specific info
+sweep_name: humb_and_ant
+method: grid
+parameters:
+  use_wandb:
+    value: True
+  env-type:
+    values: [humanoid_body_varibad, humanoid_vel_varibad]  # , ant_goal_varibad, ant_mass_varibad]
+  #exp_label:
+    #values: [kd_cembad_th]
+  cem:
+    values: [0,1]
+  seed:
+    values: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29]
+  # Example: python main.py --env-type humanoid_mass_varibad --exp_label humm_varibad --cem 0 --seed 10
