@@ -1,6 +1,6 @@
 # Robust Meta Reinforcement Learning (RoML)
 
-This repo implements RoML on top of the [VariBAD](https://arxiv.org/abs/1910.08348) algorithm for meta reinforcement learning.
+This repo implements RoML on top of the [original implementation](https://github.com/lmzintgraf/varibad) of the [VariBAD](https://arxiv.org/abs/1910.08348) algorithm for meta reinforcement learning.
 
 | <img src="media/HalfCheetahMass.gif" width="320"> <img src="media/HumanoidMass.gif" width="320"> |
 | :--: |
@@ -36,7 +36,7 @@ To process the results after training, use the module `analysis.py` as demonstra
 
 ## How to use RoML with another meta-RL baseline (instead of VariBAD)
 
-The most convenient way is probably to **use the baseline algorithm implementation** (as we did with [VariBAD](https://github.com/lmzintgraf/varibad)), and just **modify the process of task selection** during meta-training.
+The most convenient way is probably to **use the baseline algorithm implementation** (as we did here with VariBAD), and just **modify the process of task selection** during meta-training.
 This includes:
 1. Create a CEM sampler before training (e.g., using the [Dynamic CEM package](https://pypi.org/project/cross-entropy-method/)).
 2. When choosing the tasks, use the CEM to do the sampling.
