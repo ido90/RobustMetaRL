@@ -7,13 +7,13 @@ program: main.py
 docker_image: nvcr.io/nvidian/nvr-rock/raml
 
 ## Sweep specific info
-sweep_name: humb_and_ant
+sweep_name: ant
 method: grid
 parameters:
   use_wandb:
     value: True
   env-type:
-    values: [humanoid_body_varibad, humanoid_vel_varibad]  # , ant_goal_varibad, ant_mass_varibad]
+    values: [ant_mass_varibad]  # , ant_goal_varibad, ant_mass_varibad]
   #exp_label:
     #values: [kd_cembad_th]
   cem:

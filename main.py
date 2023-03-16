@@ -41,6 +41,7 @@ def generate_exp_label(args):
             'HumanoidVel-v0':'humv',
             'HumanoidMass-v0':'humm',
             'HumanoidBody-v0':'humb',
+            'AntMass-v0': 'antm',
         }
         env_name = env_name_map[args.env_name]
 
@@ -65,25 +66,15 @@ def main():
 
     # --- MUJOCO ---
 
-    # - CheetahVel -
+    # - Cheetah -
     elif env == 'cheetah_vel_varibad':
         args = args_cheetah_vel_varibad.get_args(rest_args)
     elif env == 'cheetah_vel_rl2':
         args = args_cheetah_vel_rl2.get_args(rest_args)
-    #
-    # - CheetahBody -
     elif env == 'cheetah_mass_varibad':
         args = args_cheetah_mass_varibad.get_args(rest_args)
     elif env == 'cheetah_body_varibad':
         args = args_cheetah_body_varibad.get_args(rest_args)
-    #
-    # - Ant -
-    elif env == 'ant_goal_varibad':
-        args = args_ant_goal_varibad.get_args(rest_args)
-    elif env == 'ant_mass_varibad':
-        args = args_ant_mass_varibad.get_args(rest_args)
-    elif env == 'ant_goal_rl2':
-        args = args_ant_goal_rl2.get_args(rest_args)
     #
     # - Humanoid -
     elif env == 'humanoid_vel_varibad':
@@ -92,6 +83,8 @@ def main():
         args = args_humanoid_mass_varibad.get_args(rest_args)
     elif env == 'humanoid_body_varibad':
         args = args_humanoid_body_varibad.get_args(rest_args)
+    elif env == 'ant_mass_varibad':
+        args = args_ant_mass_varibad.get_args(rest_args)
     else:
         raise Exception("Invalid Environment")
 
