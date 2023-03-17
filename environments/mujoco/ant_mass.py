@@ -11,10 +11,11 @@ class AntMassEnv(AntEnv):
     """
 
     def __init__(self, max_episode_steps=200):
+        super(AntMassEnv, self).__init__()
         self._max_episode_steps = max_episode_steps
         self.task_dim = 1
         self.set_task(self.sample_tasks(1)[0])
-        super(AntMassEnv, self).__init__()
+
 
         # save original cheetah properties (tasks are defined as ratios of these)
         # self.original_acc = self.model.actuator_acc0.copy()
