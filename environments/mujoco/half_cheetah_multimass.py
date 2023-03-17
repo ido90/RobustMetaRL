@@ -72,7 +72,9 @@ class HalfCheetahMultiMassEnv(HalfCheetahEnv):
         return self.task
 
     def sample_task(self):
-        return np.array([2 ** random.uniform(-.5, .5)
+        # return np.array([2 ** random.uniform(-.5, .5)
+        #                  for _ in range(self.task_dim)])
+        return np.array([2 ** random.uniform(-1, 1)
                          for _ in range(self.task_dim)])
 
     def sample_tasks(self, n_tasks):

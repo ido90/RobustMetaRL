@@ -33,7 +33,7 @@ def get_cem_sampler(env_name, seed, oracle=False, alpha=0.05, cem_type=1):
                 f'No oracle-CEM implemented for HalfCheetahMultiMass-v0.')
         else:
             return LogBeta(
-                0.5*np.ones(8), log_range=(-0.5,0.5), ref_alpha=alpha, batch_size=32*16,
+                0.5*np.ones(8), ref_alpha=alpha, batch_size=32*16,  # log_range=(-0.5,0.5)
                 n_orig_per_batch=0.2, soft_update=0.5, title=f'hc_multimass_{sfx}',
                 titles=[f'mass{i}' for i in range(8)])
     elif env_name == 'HalfCheetahBody-v0':

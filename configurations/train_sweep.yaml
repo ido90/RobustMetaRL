@@ -7,7 +7,7 @@ program: main.py
 docker_image: nvcr.io/nvidian/nvr-rock/raml
 
 ## Sweep specific info
-sweep_name: hcmm
+sweep_name: hcmm2
 method: grid
 parameters:
   use_wandb:
