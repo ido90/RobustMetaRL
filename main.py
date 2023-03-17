@@ -75,7 +75,7 @@ def main():
     elif env == 'cheetah_mass_varibad':
         args = args_cheetah_mass_varibad.get_args(rest_args)
     elif env == 'cheetah_multimass_varibad':
-        args = args_cheetah_mass_varibad.get_args(rest_args)
+        args = args_cheetah_multimass_varibad.get_args(rest_args)
     elif env == 'cheetah_body_varibad':
         args = args_cheetah_body_varibad.get_args(rest_args)
     #
