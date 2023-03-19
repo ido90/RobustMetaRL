@@ -271,7 +271,7 @@ class MetaLearner:
                                       f'synchronously, otherwise unexpected bugs are expected.')
                     if self.cem is not None:
                         for r in self.envs.get_return():
-                            self.cem.update(r, save=f'logs/models/{self.cem.title}')
+                            self.cem.update(r, save=f'{self.logger.full_output_folder}/{self.cem.title}')
                     next_state, belief, task = utl.reset_env(self.envs, self.args,
                                                              indices=done_indices, state=next_state,
                                                              cem=self.cem)

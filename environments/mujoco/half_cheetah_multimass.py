@@ -63,7 +63,7 @@ class HalfCheetahMultiMassEnv(HalfCheetahEnv):
 
     def set_task(self, task):
         self.task = task
-        for i in range(len(self.model.body_mass)):
+        for i in range(len(self.model.body_mass)-1):
             self.model.body_mass[i] = task[i] * self.original_mass_vec[i]
         self.model.geom_size[1:, 0] = 0.046 * task[i]
         return task
@@ -72,8 +72,6 @@ class HalfCheetahMultiMassEnv(HalfCheetahEnv):
         return self.task
 
     def sample_task(self):
-        # return np.array([2 ** random.uniform(-.5, .5)
-        #                  for _ in range(self.task_dim)])
         return np.array([2 ** random.uniform(-1, 1)
                          for _ in range(self.task_dim)])
 
