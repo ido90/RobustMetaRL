@@ -10,22 +10,22 @@ class AntMassEnv(AntEnv):
     Forward/backward ant direction environment
     """
 
-    def __init__(self, max_episode_steps=200):
-        super(AntMassEnv, self).__init__()
-        self._max_episode_steps = max_episode_steps
-        self.task_dim = 1
-        self.set_task(self.sample_tasks(1)[0])
-
-
-        # save original cheetah properties (tasks are defined as ratios of these)
-        # self.original_acc = self.model.actuator_acc0.copy()
-        self.original_mass = self.model.body_mass.copy()
-        # self.original_size = self.model.geom_size.copy()
-
+    def __init__(self, max_episode_steps=200, eval_mode=False):
         self._time = 0
         self._return = 0
         self._last_return = 0
         self._curr_rets = []
+        self._max_episode_steps = max_episode_steps
+        self.task_dim = 1
+        self.task = self.sample_tasks(1)[0]
+        super(AntMassEnv, self).__init__()
+        self.original_mass = self.model.body_mass.copy()
+        self.set_task(self.task)
+        # save original cheetah properties (tasks are defined as ratios of these)
+        # self.original_acc = self.model.actuator_acc0.copy()
+        # self.original_size = self.model.geom_size.copy()
+
+
 
     def step(self, action):
         torso_xyz_before = np.array(self.get_body_com("torso"))
@@ -34,14 +34,14 @@ class AntMassEnv(AntEnv):
         torso_velocity = torso_xyz_after - torso_xyz_before
         forward_reward = torso_velocity[0] / self.dt
 
+        state = self.state_vector()
+        survive = np.isfinite(state).all() and state[2] >= 0.2 and state[2] <= 1.0
         ctrl_cost = .5 * np.square(action).sum()
         contact_cost = 0.5 * 1e-3 * np.sum(
             np.square(np.clip(self.sim.data.cfrc_ext, -1, 1)))
-        survive_reward = 1.0
+        survive_reward = 1.0 if survive else 0.0
         reward = forward_reward - ctrl_cost - contact_cost + survive_reward
-        state = self.state_vector()
-        notdone = np.isfinite(state).all() and state[2] >= 0.2 and state[2] <= 1.0
-        done = not notdone
+        done = False
         ob = self._get_obs()
 
         self._time += 1
