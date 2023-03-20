@@ -32,8 +32,12 @@ def get_cem_sampler(env_name, seed, oracle=False, alpha=0.05, cem_type=1):
             raise NotImplementedError(
                 f'No oracle-CEM implemented for HalfCheetahMultiMass-v0.')
         else:
-            return LogBeta(
-                0.5*np.ones(8), ref_alpha=alpha, batch_size=32*16,
+            # return LogBeta(
+            #     0.5*np.ones(8), ref_alpha=alpha, batch_size=32*16,
+            #     n_orig_per_batch=0.2, soft_update=0.5, title=f'hc_multimass_{sfx}',
+            #     titles=[f'mass{i}' for i in range(8)])
+            return CEM_normal(
+                (1, 0.3), n=8, std_range=(0.1, 0.4), ref_alpha=alpha, batch_size=32*16,
                 n_orig_per_batch=0.2, soft_update=0.5, title=f'hc_multimass_{sfx}',
                 titles=[f'mass{i}' for i in range(8)])
     elif env_name == 'HalfCheetahBody-v0':
@@ -236,6 +240,45 @@ class CemExp(cem.CEM):
         w = np.array(weights)
         s = np.array(samples)
         return np.mean(w*s)/np.mean(w)
+
+class CEM_normal(cem.CEM):
+    def __init__(self, phi0=(1,0.3), n=8, *args, std_range=(0.1, 0.4), **kwargs):
+        phi = phi0[0]*np.ones(n), (phi0[1]**2)*np.eye(n)
+        super(CEM_normal, self).__init__(phi0=phi, *args, **kwargs)
+        self.n = n
+        self.std_range = std_range
+        self.default_dist_titles = 'mu', 'sigma'
+        self.default_samp_titles = [f'x{i}' for i in range(n)]
+
+    def do_sample(self, phi):
+        return np.random.multivariate_normal(phi[0], phi[1])
+
+    def pdf(self, x, phi):
+        return stats.multivariate_normal.pdf(x, phi[0], phi[1], allow_singular=True)
+
+    def make_SPD(self, C):
+        C = 0.5*(C + C.T)
+        V, U = np.linalg.eig(C)
+        V2 = V.copy()
+        if self.std_range[0] is not None:
+            V2 = np.maximum(V2, self.std_range[0]**2)
+        if self.std_range[1] is not None:
+            V2 = np.minimum(V2, self.std_range[1]**2)
+        C2 = np.real(U.dot(np.diag(V2)).dot(U.T))
+        C2 = 0.5*(C2 + C2.T)
+        return C2
+
+    def update_sample_distribution(self, samples, weights):
+        w = np.array(weights)
+        s = np.array(samples)
+        wmean = np.mean(w)
+        w /= wmean
+        W = np.repeat(w[:,np.newaxis], s.shape[1], axis=1)
+        sw = W * s
+        smean = np.mean(sw, axis=0)
+        C = sw.T.dot(sw) / W.T.dot(W)
+        C = self.make_SPD(C)
+        return smean, C
 
 class CemCircle(cem.CEM):
     def __init__(self, *args, eps=0.0, **kwargs):
