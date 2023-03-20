@@ -6,6 +6,7 @@ import gym
 import numpy as np
 import pandas as pd
 import torch
+import wandb
 
 from algorithms.a2c import A2C
 from algorithms.online_storage import OnlineStorage
@@ -638,7 +639,7 @@ class MetaLearner:
 
     def save_model(self, best=''):
         dir = f'best_{best}_models' if best else 'final_models'
-        save_path = os.path.join(self.logger.full_output_folder, dir)
+        save_path = os.path.join(wandb.run.dir, dir)
         if not os.path.exists(save_path):
             os.mkdir(save_path)
 
