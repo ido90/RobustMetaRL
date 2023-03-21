@@ -676,7 +676,7 @@ class MetaLearner:
             elif model != 'final':
                 warnings.warn(f'Unexpected model to load: {best}')
             dir = f'{model}_models'
-            save_path = os.path.join(self.logger.full_output_folder, dir)
+            save_path = os.path.join(wandb.run.dir, dir)
 
             if model and not os.path.exists(save_path):
                 print(f'Compatibility issue: {model}_models unavailable, using best_models instead.')
