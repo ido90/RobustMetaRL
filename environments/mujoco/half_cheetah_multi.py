@@ -5,6 +5,12 @@ import numpy as np
 from gym.spaces import Box
 from .half_cheetah import HalfCheetahEnv
 
+# MODEL_KEYS = ['actuator_gear', 'actuator_lengthrange', 'body_inertia', 'cam_ipd', 'geom_solmix',
+#               'geom_solref', 'jnt_margin', 'jnt_stiffness', 'light_pos', 'mat_rgba']
+MODEL_KEYS = ['cam_ipd', 'cam_mat0', 'dof_frictionloss', 'dof_solref', 'geom_friction',
+              'geom_gap', 'geom_rbound', 'geom_solimp', 'light_specular', 'mat_shininess']
+# MODEL_KEYS = ['body_ipos', 'body_mass', 'body_pos', 'geom_gap', 'geom_margin',
+#               'jnt_range', 'jnt_solref', 'jnt_stiffness', 'light_specular', 'mat_emission']
 
 class HalfCheetahMultiEnv(HalfCheetahEnv):
     """Half-cheetah environment with varying body. The code is adapted from
@@ -30,16 +36,7 @@ class HalfCheetahMultiEnv(HalfCheetahEnv):
         # save original cheetah properties (properties chosen randomly:)
         # sorted(np.random.choice([atr for atr in env.model.__dir__()
         #                          if type(getattr(env.model, atr))==np.ndarray and getattr(env.model, atr).dtype in (np.float32,np.float64)], 10, False))
-        self.model_keys = ['actuator_gear',
-                           'actuator_lengthrange',
-                           'body_inertia',
-                           'cam_ipd',
-                           'geom_solmix',
-                           'geom_solref',
-                           'jnt_margin',
-                           'jnt_stiffness',
-                           'light_pos',
-                           'mat_rgba']
+        self.model_keys = MODEL_KEYS
         self.original_vecs = [getattr(self.model, k).copy()
                               for k in self.model_keys]
         self.task_dim = len(self.model_keys)
@@ -89,7 +86,7 @@ class HalfCheetahMultiEnv(HalfCheetahEnv):
         return self.task
 
     def sample_task(self):
-        return np.array([2 ** random.uniform(-1, 1)
+        return np.array([2 ** random.uniform(-0.5, 0.5)
                          for _ in range(self.task_dim)])
 
     def sample_tasks(self, n_tasks):

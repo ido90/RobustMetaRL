@@ -44,7 +44,7 @@ def get_cem_sampler(env_name, seed, oracle=False, alpha=0.05, cem_type=1):
                 n_orig_per_batch=0.25, soft_update=0.0, title=f'hc_multimass_{sfx}')
     elif env_name == 'HalfCheetahMulti-v0':
         return LogBeta(
-            0.5*np.ones(10), ref_alpha=alpha, batch_size=32*16,
+            0.5*np.ones(10), log_range=(-0.5,0.5), ref_alpha=alpha, batch_size=32*16,
             n_orig_per_batch=0.2, soft_update=0.5, title=f'hc_multi_{sfx}',
             titles=[f'task{i}' for i in range(10)])
     elif env_name == 'HalfCheetahBody-v0':
