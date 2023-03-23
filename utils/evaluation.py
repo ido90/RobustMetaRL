@@ -50,7 +50,6 @@ def evaluate(args,
                          ret_rms=ret_rms,
                          tasks=tasks,
                          add_done_info=args.max_rollouts_per_task > 1,
-                         eval_mode=True,
                          )
     num_steps = envs._max_episode_steps
 

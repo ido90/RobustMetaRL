@@ -13,7 +13,7 @@ class AntVelEnv(AntEnv):
     def __init__(self, max_episode_steps=200):
         self._max_episode_steps = max_episode_steps
         self.task_dim = 1
-        self.task = None
+        self.goal_velocity = 0
         self._time = 0
         self._return = 0
         self._last_return = 0
