@@ -38,6 +38,22 @@ register(
 )
 
 register(
+    'AntBody-v0',
+    entry_point='environments.wrappers:mujoco_wrapper',
+    kwargs={'entry_point': 'environments.mujoco.ant_body:AntBodyEnv',
+            'max_episode_steps': 200},
+    max_episode_steps=200
+)
+
+register(
+    'AntVel-v0',
+    entry_point='environments.wrappers:mujoco_wrapper',
+    kwargs={'entry_point': 'environments.mujoco.ant_vel:AntVelEnv',
+            'max_episode_steps': 200},
+    max_episode_steps=200
+)
+
+register(
     'HalfCheetahDir-v0',
     entry_point='environments.wrappers:mujoco_wrapper',
     kwargs={'entry_point': 'environments.mujoco.half_cheetah_dir:HalfCheetahDirEnv',

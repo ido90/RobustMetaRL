@@ -36,9 +36,12 @@ def get_cem_sampler(env_name, seed, oracle=False, alpha=0.05, cem_type=1):
             #     0.5*np.ones(8), ref_alpha=alpha, batch_size=32*16,
             #     n_orig_per_batch=0.2, soft_update=0.5, title=f'hc_multimass_{sfx}',
             #     titles=[f'mass{i}' for i in range(8)])
-            return CEM_normal(
-                (1, 0.3), n=8, std_range=(0.1, 0.4), ref_alpha=alpha, batch_size=64*16,
-                n_orig_per_batch=0.2, soft_update=0.0, title=f'hc_multimass_{sfx}')
+            # return CEM_normal(
+            #     (1, 0.3), n=8, std_range=(0.1, 0.4), ref_alpha=alpha, batch_size=64*16,
+            #     n_orig_per_batch=0.2, soft_update=0.0, title=f'hc_multimass_{sfx}')
+            return CEM_MixG(
+                (1, 0.3), ng=3, n=8, std_range=(0.1, 0.4), ref_alpha=alpha, batch_size=64*16,
+                n_orig_per_batch=0.25, soft_update=0.0, title=f'hc_multimass_{sfx}')
     elif env_name == 'HalfCheetahBody-v0':
         if oracle:
             raise NotImplementedError(
@@ -93,6 +96,15 @@ def get_cem_sampler(env_name, seed, oracle=False, alpha=0.05, cem_type=1):
             return LogBeta1D(
                 0.5, ref_alpha=alpha, batch_size=8*16,
                 n_orig_per_batch=0.2, soft_update=0.5, title=f'ant_mass_{sfx}')
+    elif env_name == 'AntBody-v0':
+        return LogBeta(
+            0.5*np.ones(3), ref_alpha=alpha, batch_size=8*16,
+            n_orig_per_batch=0.2, soft_update=0.5, title=f'ant_body_{sfx}',
+            titles=('mass', 'damping', 'head_size'))  # TODO
+    elif env_name == 'AntVel-v0':
+        return CEM_Beta(
+            0.5, vmax=3, ref_alpha=alpha, batch_size=8*16,
+            n_orig_per_batch=0.2, soft_update=0.5, title=f'ant_vel_{sfx}')
     elif env_name == 'KhazadDum-v0':
         if oracle:
             raise NotImplementedError(
@@ -278,6 +290,61 @@ class CEM_normal(cem.CEM):
         C = sw.T.dot(sw) / W.T.dot(W)
         C = self.make_SPD(C)
         return smean, C
+
+class CEM_MixG(cem.CEM):
+    def __init__(self, phi0=(1,0.3), ng=3, n=8, *args, std_range=(0.1, 0.5), **kwargs):
+
+        # param format: [[Amp1,Amp2,...], [mu1,Sigma1], [mu2,Sigma2], ...]
+        #    ng = number of Gaussians
+        #    Amp_i = p_i = amplitude of Gaussian i (dim=1)
+        #    mu_i = mean of Gaussian i (dim=n)
+        #    Sigma_i = Covariance of Gaussian i (dim=n^2)
+        phi = [ng*[1/ng]] + [[phi0[0]*np.ones(n), (phi0[1]**2)*np.eye(n)] for _ in range(ng)]
+
+        super().__init__(phi0=phi, *args, **kwargs)
+        self.ng = ng
+        self.n = n
+        self.gaussians = list(range(ng))
+        self.std_range = std_range
+        self.default_dist_titles = ['amplitudes'] + [f'mu_sigma_{i}' for i in range(self.ng)]
+        self.default_samp_titles = [f'x{i}' for i in range(n)]
+
+    def do_sample(self, phi):
+        g = np.random.choice(self.gaussians, size=1, p=phi[0])[0]
+        mu, sigma = phi[g+1]
+        return np.random.multivariate_normal(mu, sigma)
+
+    def pdf(self, x, phi):
+        p = 0
+        for g in range(self.ng):
+            a = phi[0][g]
+            mu, sigma = phi[g+1]
+            p += a * stats.multivariate_normal.pdf(x, mu, sigma, allow_singular=True)
+        return p
+
+    def make_SPD(self, C):
+        C = 0.5*(C + C.T)
+        V, U = np.linalg.eig(C)
+        V2 = V.copy()
+        if self.std_range[0] is not None:
+            V2 = np.maximum(V2, self.std_range[0]**2)
+        if self.std_range[1] is not None:
+            V2 = np.minimum(V2, self.std_range[1]**2)
+        C2 = np.real(U.dot(np.diag(V2)).dot(U.T))
+        C2 = 0.5*(C2 + C2.T)
+        return C2
+
+    def update_sample_distribution(self, samples, weights):
+        w = np.array(weights)
+        s = np.array(samples)
+        wmean = np.mean(w)
+        w /= wmean
+        W = np.repeat(w[:,np.newaxis], s.shape[1], axis=1)
+        sw = W * s
+        smean = np.mean(sw, axis=0)
+        C = sw.T.dot(sw) / W.T.dot(W)
+        C = self.make_SPD(C)
+        return [[1]+(self.ng-1)*[0]] + self.ng*[(smean, C)]
 
 class CemCircle(cem.CEM):
     def __init__(self, *args, eps=0.0, **kwargs):

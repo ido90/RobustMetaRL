@@ -15,6 +15,7 @@ import wandb
 from config import args_khazad_dum_varibad
 from config.mujoco import args_cheetah_vel_rl2, args_cheetah_vel_varibad, args_cheetah_mass_varibad, args_cheetah_multimass_varibad, \
     args_cheetah_body_varibad,  args_ant_goal_rl2, args_ant_goal_varibad, args_ant_mass_varibad, \
+    args_ant_body_varibad, args_ant_vel_varibad, \
     args_humanoid_vel_varibad, args_humanoid_mass_varibad, args_humanoid_body_varibad
 from environments.parallel_envs import make_vec_envs
 from learner import Learner
@@ -43,6 +44,8 @@ def generate_exp_label(args):
             'HumanoidMass-v0':'humm',
             'HumanoidBody-v0':'humb',
             'AntMass-v0': 'antm',
+            'AntBody-v0': 'antb',
+            'AntVel-v0': 'antv',
         }
         env_name = env_name_map[args.env_name]
 
@@ -88,6 +91,10 @@ def main():
         args = args_humanoid_body_varibad.get_args(rest_args)
     elif env == 'ant_mass_varibad':
         args = args_ant_mass_varibad.get_args(rest_args)
+    elif env == 'ant_body_varibad':
+        args = args_ant_body_varibad.get_args(rest_args)
+    elif env == 'ant_vel_varibad':
+        args = args_ant_vel_varibad.get_args(rest_args)
     else:
         raise Exception("Invalid Environment")
 
