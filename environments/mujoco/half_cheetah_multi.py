@@ -7,10 +7,10 @@ from .half_cheetah import HalfCheetahEnv
 
 # MODEL_KEYS = ['actuator_gear', 'actuator_lengthrange', 'body_inertia', 'cam_ipd', 'geom_solmix',
 #               'geom_solref', 'jnt_margin', 'jnt_stiffness', 'light_pos', 'mat_rgba']
-MODEL_KEYS = ['cam_ipd', 'cam_mat0', 'dof_frictionloss', 'dof_solref', 'geom_friction',
-              'geom_gap', 'geom_rbound', 'geom_solimp', 'light_specular', 'mat_shininess']
-# MODEL_KEYS = ['body_ipos', 'body_mass', 'body_pos', 'geom_gap', 'geom_margin',
-#               'jnt_range', 'jnt_solref', 'jnt_stiffness', 'light_specular', 'mat_emission']
+# MODEL_KEYS = ['cam_ipd', 'cam_mat0', 'dof_frictionloss', 'dof_solref', 'geom_friction',
+#               'geom_gap', 'geom_rbound', 'geom_solimp', 'light_specular', 'mat_shininess']
+MODEL_KEYS = ['body_ipos', 'body_mass', 'body_pos', 'geom_gap', 'geom_margin',
+              'jnt_range', 'jnt_solref', 'jnt_stiffness', 'light_specular', 'mat_emission']
 
 class HalfCheetahMultiEnv(HalfCheetahEnv):
     """Half-cheetah environment with varying body. The code is adapted from
