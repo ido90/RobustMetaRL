@@ -78,6 +78,14 @@ register(
 )
 
 register(
+    'HalfCheetahMulti-v0',
+    entry_point='environments.wrappers:mujoco_wrapper',
+    kwargs={'entry_point': 'environments.mujoco.half_cheetah_multi:HalfCheetahMultiEnv',
+            'max_episode_steps': 200},
+    max_episode_steps=200
+)
+
+register(
     'HalfCheetahMultiMass-v0',
     entry_point='environments.wrappers:mujoco_wrapper',
     kwargs={'entry_point': 'environments.mujoco.half_cheetah_multimass:HalfCheetahMultiMassEnv',
