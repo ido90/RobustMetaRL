@@ -9,8 +9,8 @@ class AntGoalEnv(AntEnv):
     def __init__(self, max_episode_steps=200, eval_mode=False):
         self._max_episode_steps = max_episode_steps
         self.task_dim = 2
-        self.task = None
-        self.set_task(self.sample_tasks(1)[0])
+        self.goal_pos = None
+        self.set_task(self.sample_task())
         self._time = 0
         self._return = 0
         self._last_return = 0
@@ -53,10 +53,11 @@ class AntGoalEnv(AntEnv):
     def sample_tasks(self, num_tasks):
         a = np.array([random.random() for _ in range(num_tasks)]) * 2 * np.pi
         r = 5 * np.array([random.random() for _ in range(num_tasks)]) ** 0.5
-        return np.stack((r * np.cos(a), r * np.sin(a)), axis=-1)
+        goal_pos = np.stack((r * np.cos(a), r * np.sin(a)), axis=-1)
+        return goal_pos
 
     def sample_task(self):
-        return self.sample_tasks(1)
+        return self.sample_tasks(1)[0]
 
     def set_task(self, task):
         self.goal_pos = task

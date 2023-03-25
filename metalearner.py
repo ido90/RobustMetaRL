@@ -272,7 +272,7 @@ class MetaLearner:
                                       f'synchronously, otherwise unexpected bugs are expected.')
                     if self.cem is not None:
                         for r in self.envs.get_return():
-                            self.cem.update(r, save=f'{wandb.run.dir}/{self.cem.title}')
+                            self.cem.update(r, save=f'{"logs/models" if wandb.run is None else wandb.run.dir}/{self.cem.title}')
                     next_state, belief, task = utl.reset_env(self.envs, self.args,
                                                              indices=done_indices, state=next_state,
                                                              cem=self.cem)
@@ -639,7 +639,7 @@ class MetaLearner:
 
     def save_model(self, best=''):
         dir = f'best_{best}_models' if best else 'final_models'
-        save_path = os.path.join(wandb.run.dir, dir)
+        save_path = os.path.join('logs/models' if wandb.run is None else wandb.run.dir, dir)
         if not os.path.exists(save_path):
             os.mkdir(save_path)
 

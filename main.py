@@ -93,6 +93,8 @@ def main():
         args = args_humanoid_mass_varibad.get_args(rest_args)
     elif env == 'humanoid_body_varibad':
         args = args_humanoid_body_varibad.get_args(rest_args)
+    #
+    # - Ant -
     elif env == 'ant_mass_varibad':
         args = args_ant_mass_varibad.get_args(rest_args)
     elif env == 'ant_body_varibad':
