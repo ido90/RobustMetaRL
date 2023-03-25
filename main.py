@@ -47,6 +47,7 @@ def generate_exp_label(args):
             'AntMass-v0': 'antm',
             'AntBody-v0': 'antb',
             'AntVel-v0': 'antv',
+            'AntGoal-v0': 'antg',
         }
         env_name = env_name_map[args.env_name]
 
@@ -98,6 +99,8 @@ def main():
         args = args_ant_body_varibad.get_args(rest_args)
     elif env == 'ant_vel_varibad':
         args = args_ant_vel_varibad.get_args(rest_args)
+    elif env == 'ant_goal_varibad':
+        args = args_ant_goal_varibad.get_args(rest_args)
     else:
         raise Exception("Invalid Environment")
 

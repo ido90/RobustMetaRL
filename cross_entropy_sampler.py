@@ -352,8 +352,9 @@ class CEM_MixG(cem.CEM):
         return [[1]+(self.ng-1)*[0]] + self.ng*[(smean, C)]
 
 class CemCircle(cem.CEM):
-    def __init__(self, *args, eps=0.0, **kwargs):
+    def __init__(self, *args, radius=5.0, eps=0.0, **kwargs):
         super(CemCircle, self).__init__(*args, **kwargs)
+        self.radius = radius
         self.eps = eps
         self.default_dist_titles = ('mean_r', 'mean_theta')
         self.default_samp_titles = ('r', 'theta')
@@ -361,11 +362,11 @@ class CemCircle(cem.CEM):
     def do_sample(self, phi):
         r0, theta0 = np.random.beta(2*phi, 2-2*phi)
         theta = 2*np.pi*theta0
-        r = 5*np.sqrt(r0)
+        r = self.radius*np.sqrt(r0)
         return np.array((r*np.cos(theta), r*np.sin(theta)))
 
     def xy2rt(self, x, y):
-        return (x**2+y**2)/(5**2), \
+        return (x**2+y**2)/(self.radius**2), \
                (np.arctan2(y, x)+np.pi) / (2*np.pi)
 
     def pdf(self, x, phi):

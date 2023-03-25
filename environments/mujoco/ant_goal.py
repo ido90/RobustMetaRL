@@ -9,13 +9,13 @@ class AntGoalEnv(AntEnv):
     def __init__(self, max_episode_steps=200, eval_mode=False):
         self._max_episode_steps = max_episode_steps
         self.task_dim = 2
+        self.task = None
         self.set_task(self.sample_tasks(1)[0])
-        super(AntGoalEnv, self).__init__()
-
         self._time = 0
         self._return = 0
         self._last_return = 0
         self._curr_rets = []
+        super(AntGoalEnv, self).__init__()
 
     def step(self, action):
         self.do_simulation(action, self.frame_skip)
