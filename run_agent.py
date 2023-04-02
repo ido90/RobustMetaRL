@@ -9,9 +9,10 @@ from environments.parallel_envs import make_vec_envs
 from utils import helpers as utl
 import analysis
 from config import args_khazad_dum_varibad
-from config.mujoco import \
-    args_cheetah_vel_varibad, args_cheetah_mass_varibad, args_cheetah_body_varibad, \
-    args_humanoid_mass_varibad, args_humanoid_body_varibad
+from config.mujoco import args_cheetah_vel_rl2, args_cheetah_vel_varibad, args_cheetah_mass_varibad, \
+    args_cheetah_body_varibad,  args_ant_goal_rl2, args_ant_goal_varibad, args_ant_mass_varibad, \
+    args_cheetah_multi_varibad, args_ant_body_varibad, args_ant_vel_varibad, \
+    args_humanoid_vel_varibad, args_humanoid_mass_varibad, args_humanoid_body_varibad
 from metalearner import MetaLearner
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -173,6 +174,14 @@ def main():
         args = args_humanoid_body_varibad.get_args(rest_args)
     elif env == 'khazad_dum_varibad':
         args = args_khazad_dum_varibad.get_args(rest_args)
+    elif env == 'ant_mass_varibad':
+        args = args_ant_mass_varibad.get_args(rest_args)
+    elif env == 'ant_body_varibad':
+        args = args_ant_body_varibad.get_args(rest_args)
+    elif env == 'ant_vel_varibad':
+        args = args_ant_vel_varibad.get_args(rest_args)
+    elif env == 'ant_goal_varibad':
+        args = args_ant_goal_varibad.get_args(rest_args)
     else:
         raise Exception("Invalid Environment")
 
@@ -227,10 +236,10 @@ def main():
         args.action_space = None
         base_path = analysis.get_base_path(args.env_name)
         dir = analysis.get_dir(base_path, short_name, method, args.seed)
-        # pth = f'{base_path}/{dir}/final_models'
+        pth = f'{base_path}/{dir}/final_models'
         # pth = f'{base_path}/{dir}/best_models'
         # pth = f'{base_path}/{dir}/best_mean_models'
-        pth = f'{base_path}/{dir}/best_cvar_models'
+        # pth = f'{base_path}/{dir}/best_cvar_models'
         print('\nLoading model from:', pth)
         learner = MetaLearner(args)
         learner.load_model(save_path=pth)

@@ -13,7 +13,7 @@ import wandb
 
 # get configs
 from config import args_khazad_dum_varibad
-from config.mujoco import args_cheetah_vel_rl2, args_cheetah_vel_varibad, args_cheetah_mass_varibad, args_cheetah_multimass_varibad, \
+from config.mujoco import args_cheetah_vel_rl2, args_cheetah_vel_varibad, args_cheetah_mass_varibad, \
     args_cheetah_body_varibad,  args_ant_goal_rl2, args_ant_goal_varibad, args_ant_mass_varibad, \
     args_cheetah_multi_varibad, args_ant_body_varibad, args_ant_vel_varibad, \
     args_humanoid_vel_varibad, args_humanoid_mass_varibad, args_humanoid_body_varibad
@@ -40,7 +40,6 @@ def generate_exp_label(args):
             'HalfCheetahMass-v0':'hcm',
             'HalfCheetahBody-v0':'hcb',
             'HalfCheetahMulti-v0':'hcn',
-            'HalfCheetahMultiMass-v0':'hcmm',
             'HumanoidVel-v0':'humv',
             'HumanoidMass-v0':'humm',
             'HumanoidBody-v0':'humb',
@@ -81,8 +80,6 @@ def main():
         args = args_cheetah_mass_varibad.get_args(rest_args)
     elif env == 'cheetah_multi_varibad':
         args = args_cheetah_multi_varibad.get_args(rest_args)
-    elif env == 'cheetah_multimass_varibad':
-        args = args_cheetah_multimass_varibad.get_args(rest_args)
     elif env == 'cheetah_body_varibad':
         args = args_cheetah_body_varibad.get_args(rest_args)
     #
