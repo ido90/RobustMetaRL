@@ -14,7 +14,8 @@ def evaluate(args,
              iter_idx,
              tasks,
              encoder=None,
-             num_episodes=None
+             num_episodes=None,
+             save_trajectories=False,
              ):
     env_name = args.env_name
     if hasattr(args, 'test_env_name'):
@@ -56,6 +57,7 @@ def evaluate(args,
     # reset environments
     state, belief, task = utl.reset_env(envs, args)
     tasks = envs.get_task()
+    trajs = None
 
     # this counts how often an agent has done the same task already
     task_count = torch.zeros(num_processes).long().to(device)
@@ -103,12 +105,14 @@ def evaluate(args,
                 # count task up, but cap at num_episodes + 1
                 task_count[i] = min(task_count[i] + 1, num_episodes)  # zero-indexed, so no +1
             if np.sum(done) > 0:
+                if save_trajectories:
+                    trajs = envs.get_traj()
                 done_indices = np.argwhere(done.flatten()).flatten()
                 state, belief, task = utl.reset_env(envs, args, indices=done_indices, state=state)
 
     envs.close()
 
-    return returns_per_episode[:, :num_episodes], tasks, more_info
+    return returns_per_episode[:, :num_episodes], tasks, trajs, more_info
 
 
 def visualise_behaviour(args,

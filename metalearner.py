@@ -2,6 +2,7 @@ import os
 import time
 import warnings
 
+import pickle as pkl
 import gym
 import numpy as np
 import pandas as pd
@@ -428,14 +429,19 @@ class MetaLearner:
 
         for i in range(n_iters):
             ret_rms = self.envs.venv.ret_rms if self.args.norm_rew_for_policy else None
-            returns_per_episode, tasks, info = utl_eval.evaluate(
+            returns_per_episode, tasks, trajs, info = utl_eval.evaluate(
                 args=self.args,
                 policy=self.policy,
                 ret_rms=ret_rms,
                 encoder=self.vae.encoder,
                 iter_idx=i,  # used for seed
                 tasks=None,
+                save_trajectories=self.args.env_name=='AntGoal-v0' and i==0,
             )
+
+            if trajs is not None:
+                with open(f'{self.logger.full_output_folder}/trajs_{fname}.pkl', 'wb') as fd:
+                    pkl.dump(trajs, fd)
 
             # update data-frame
             n_tasks = returns_per_episode.shape[0]
@@ -497,7 +503,7 @@ class MetaLearner:
             n_iters = int(np.ceil(self.args.valid_tasks / self.args.num_processes))
             for i in range(n_iters):
                 ret_rms = self.envs.venv.ret_rms if self.args.norm_rew_for_policy else None
-                returns_per_episode_i, tasks_i, info_i = utl_eval.evaluate(
+                returns_per_episode_i, tasks_i, trajs, info_i = utl_eval.evaluate(
                     args=self.args,
                     policy=self.policy,
                     ret_rms=ret_rms,

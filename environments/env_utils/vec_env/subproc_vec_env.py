@@ -32,6 +32,8 @@ def worker(remote, parent_remote, env_fn_wrapper):
                 remote.send((env.observation_space, env.action_space))
             elif cmd == 'get_return':
                 remote.send(env.get_last_return())
+            elif cmd == 'get_traj':
+                remote.send(env.get_traj())
             elif cmd == 'get_task':
                 remote.send(env.get_task())
             elif cmd == 'set_task':
@@ -135,6 +137,12 @@ class SubprocVecEnv(VecEnv):
         self._assert_not_closed()
         for remote in self.remotes:
             remote.send(('get_task', None))
+        return np.stack([remote.recv() for remote in self.remotes])
+
+    def get_traj(self):
+        self._assert_not_closed()
+        for remote in self.remotes:
+            remote.send(('get_traj', None))
         return np.stack([remote.recv() for remote in self.remotes])
 
     def set_task(self, tasks):

@@ -15,11 +15,13 @@ class AntGoalEnv(AntEnv):
         self._return = 0
         self._last_return = 0
         self._curr_rets = []
+        self.traj = []
         super(AntGoalEnv, self).__init__()
 
     def step(self, action):
         self.do_simulation(action, self.frame_skip)
         xposafter = np.array(self.get_body_com("torso"))
+        self.traj.append([xposafter[0], xposafter[1]])
 
         goal_reward = -np.sum(np.abs(xposafter[:2] - self.goal_pos))  # make it happy, not suicidal
 
@@ -65,6 +67,9 @@ class AntGoalEnv(AntEnv):
     def get_task(self):
         return np.array(self.goal_pos)
 
+    def get_traj(self):
+        return np.array(self.traj)
+
     def _get_obs(self):
         return np.concatenate([
             self.sim.data.qpos.flat,
@@ -80,6 +85,7 @@ class AntGoalEnv(AntEnv):
         self._last_return = self._return
         self._curr_rets = []
         self._return = 0
+        self.traj = []
 
 
 class AntGoalOracleEnv(AntGoalEnv):
