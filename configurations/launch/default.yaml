@@ -14,9 +14,9 @@ git:
 
 ngc:
   workspace: Eli_general
-  job_name: "{sweep_hash}_{commit}_ml-model.raml"
+  job_name: "{sweep_hash}_{commit}_wl___reinforcement_learning.raml"
   num_gpus: 1
-  ngc_instance: "dgx1v.16g.{num_gpus}.norm"
+  ngc_instance: "dgx1v.32g.{num_gpus}.norm"
   upload_timeout: 300 # code upload timeout in seconds
   run_cmd_ngc: >
     docker_cfg/ts $HOME/ngc batch run
@@ -48,6 +48,7 @@ experiment_commandline: >
   unset WANDB_API_KEY;
   source docker_cfg/configuration.sh;
   {wandb_login};
+  pip install gym==0.21;
   {prefix_agent_commandline};
   {jupyter_cmd};
   docker_cfg/ts -S 100;
@@ -55,6 +56,7 @@ experiment_commandline: >
   cp wandb/debug-internal.log /result/wandb_debug-internal.log;
   cp wandb/debug.log /result/wandb_debug.log;
 
+#  pip install gym==0.21;
 #### Explaining the above experiment commandline
 #  mkdir -p {source_dir};                               # mkdir for source code
 #  {cmd_clone}; {cmd_checkout};                         # clone and checkout code to source_dir
