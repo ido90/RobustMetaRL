@@ -92,7 +92,7 @@ class MetaLearner:
         self.cem = None
         if self.args.cem > 0:
             print('\nCreating cem sampler.\n')
-            self.cem = cem.get_cem_sampler(args.env_name, args.seed, args.oracle, args.alpha, args.cem)
+            self.cem = cem.get_cem_sampler(args.env_name, args.seed, args.oracle, args.alpha, args.cem, args.naive)
             if not os.path.exists('logs/models/'):
                 os.makedirs('logs/models/')
             if self.args.cem == 2:

@@ -4,7 +4,7 @@ from scipy import stats
 import cross_entropy_method as cem
 
 
-def get_cem_sampler(env_name, seed, oracle=False, alpha=0.05, cem_type=1):
+def get_cem_sampler(env_name, seed, oracle=False, alpha=0.05, cem_type=1, naive=False):
     sfx = f'{seed:d}'
     if cem_type == 2:
         sfx = f'soft_{sfx}'
@@ -28,14 +28,25 @@ def get_cem_sampler(env_name, seed, oracle=False, alpha=0.05, cem_type=1):
                 0.5, ref_alpha=alpha, batch_size=8*16,
                 n_orig_per_batch=0.2, soft_update=0.5, title=f'hc_mass_{sfx}')
     elif env_name == 'HalfCheetahMulti-v0':
-        return LogBeta(
-            0.5*np.ones(10), log_range=(-0.5,0.5), ref_alpha=alpha, batch_size=32*16,
-            n_orig_per_batch=0.2, soft_update=0.5, title=f'hc_multi_{sfx}',
-            titles=[f'task{i}' for i in range(10)])
+        if naive:
+            return LogUnif(
+                0.5 * np.ones(10), log_range=(-0.5, 0.5), ref_alpha=alpha, batch_size=100,
+                n_orig_per_batch=0.0, soft_update=0.0, title=f'hc_multi_naive_{sfx}',
+                titles=[f'task{i}' for i in range(10)])
+        else:
+            return LogBeta(
+                0.5*np.ones(10), log_range=(-0.5,0.5), ref_alpha=alpha, batch_size=32*16,
+                n_orig_per_batch=0.2, soft_update=0.5, title=f'hc_multi_{sfx}',
+                titles=[f'task{i}' for i in range(10)])
     elif env_name == 'HalfCheetahBody-v0':
         if oracle:
             raise NotImplementedError(
                 f'No oracle-CEM implemented for HalfCheetahBody-v0.')
+        elif naive:
+            return LogUnif(
+                0.5*np.ones(3), ref_alpha=alpha, batch_size=100,
+                n_orig_per_batch=0.0, soft_update=0.0, title=f'hc_body_{sfx}',
+                titles=('mass', 'damping', 'head_size'))
         else:
             return LogBeta(
                 0.5*np.ones(3), ref_alpha=alpha, batch_size=8*16,
@@ -224,6 +235,49 @@ class LogBeta(cem.CEM):
         w = np.repeat(w[:, np.newaxis], s.shape[1], axis=1)
         s = (np.log2(s) - self.log_range[0]) / (self.log_range[1]-self.log_range[0])
         return np.clip(np.mean(w*s, axis=0)/wmean, self.eps, 1-self.eps)
+
+
+class LogUnif(cem.CEM):
+    '''x ~ 2**Unif, multi-dimensional'''
+
+    def __init__(self, *args, log_range=(-1, 1), n_samples=100, titles=None, **kwargs):
+        super(LogUnif, self).__init__(*args, **kwargs)
+        if titles is not None:
+            self.default_dist_titles = [f'{t}_mean' for t in titles]
+            self.default_samp_titles = [t for t in titles]
+        self.log_range = log_range
+        self.n_samples = n_samples
+        self.pool = [self.sample_for_pool(self.original_dist) for _ in range(self.n_samples)]
+        self.small_pool = self.pool
+        self.first_scores = []
+        self.s_count = 0
+        self.u_count = 0
+
+    def sample_for_pool(self, phi):
+        x = np.random.uniform(size=len(phi))
+        x = self.log_range[0] + (self.log_range[1]-self.log_range[0]) * x
+        return np.power(2, x)
+
+    def do_sample(self, phi):
+        if self.s_count < self.n_samples:
+            self.s_count += 1
+            return self.pool[self.s_count-1]
+        return np.random.choice(self.small_pool)
+
+    def pdf(self, x, phi):
+        return 1
+
+    def update_sample_distribution(self, samples, weights):
+        if self.u_count < self.n_samples:
+            n = self.n_samples - self.u_count
+            self.first_scores.extend(self.scores[-1][:n])
+            self.u_count += n
+        if self.u_count == self.n_samples:
+            self.small_pool = sorted(self.pool, key=self.first_scores)[:int(np.round(self.ref_alpha*self.n_samples))]
+            self.u_count += 1
+
+        return self.original_dist
+
 
 class CemExp(cem.CEM):
     def __init__(self, *args, **kwargs):

@@ -19,6 +19,7 @@ def get_args(rest_args):
     parser.add_argument('--alpha', type=float, default=0.05, help='CVaR risk level')
     parser.add_argument('--tail', type=int, default=0, help='learn from all batch / tail / scheduled-tail')
     parser.add_argument('--cem', type=int, default=0, help='use CEM sampler (none / strict / scheduled)')
+    parser.add_argument('--naive', type=bool, default=False, help='replace the CEM with a naive sampler')
     parser.add_argument('--oracle', type=bool, default=False, help='use oracle CEM sampler')
 
     # --- POLICY ---
