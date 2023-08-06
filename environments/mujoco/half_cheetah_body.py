@@ -20,6 +20,11 @@ class HalfCheetahBodyEnv(HalfCheetahEnv):
         self._max_episode_steps = max_episode_steps
         self.task_dim = 3
         self.task = None
+        self._time = 0
+        self._return = 0
+        self._last_return = 0
+        self._curr_rets = []
+
         super(HalfCheetahBodyEnv, self).__init__()
         self.observation_space = Box(low=-np.inf, high=np.inf, shape=(20,),
                                      dtype=np.float64)
@@ -30,11 +35,6 @@ class HalfCheetahBodyEnv(HalfCheetahEnv):
         self.original_damp_vec = self.model.dof_damping.copy()  # 9 elements
         self.original_len = self.model.geom_size[2, 1].copy()  # 1 element
         self.set_task(self.sample_task())
-
-        self._time = 0
-        self._return = 0
-        self._last_return = 0
-        self._curr_rets = []
 
     def step(self, action):
         xposbefore = self.sim.data.qpos[0]
