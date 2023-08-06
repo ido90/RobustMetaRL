@@ -30,7 +30,7 @@ def get_cem_sampler(env_name, seed, oracle=False, alpha=0.05, cem_type=1, naive=
     elif env_name == 'HalfCheetahMulti-v0':
         if naive:
             return LogUnif(
-                0.5 * np.ones(10), log_range=(-0.5, 0.5), ref_alpha=alpha, batch_size=100,
+                0.5 * np.ones(10), log_range=(-0.5, 0.5), ref_alpha=alpha, batch_size=32*16,
                 n_orig_per_batch=0.0, soft_update=0.0, title=f'hc_multi_naive_{sfx}',
                 titles=[f'task{i}' for i in range(10)])
         else:
@@ -44,7 +44,7 @@ def get_cem_sampler(env_name, seed, oracle=False, alpha=0.05, cem_type=1, naive=
                 f'No oracle-CEM implemented for HalfCheetahBody-v0.')
         elif naive:
             return LogUnif(
-                0.5*np.ones(3), ref_alpha=alpha, batch_size=100,
+                0.5*np.ones(3), ref_alpha=alpha, batch_size=8*16,
                 n_orig_per_batch=0.0, soft_update=0.0, title=f'hc_body_{sfx}',
                 titles=('mass', 'damping', 'head_size'))
         else:
@@ -262,7 +262,8 @@ class LogUnif(cem.CEM):
         if self.s_count < self.n_samples:
             self.s_count += 1
             return self.pool[self.s_count-1]
-        return np.random.choice(self.small_pool)
+        z = np.random.randint(len(self.pool))
+        return self.pool[z]
 
     def pdf(self, x, phi):
         return 1
@@ -273,7 +274,9 @@ class LogUnif(cem.CEM):
             self.first_scores.extend(self.scores[-1][:n])
             self.u_count += n
         if self.u_count == self.n_samples:
-            self.small_pool = sorted(self.pool, key=self.first_scores)[:int(np.round(self.ref_alpha*self.n_samples))]
+            # find the botton k indices of self.first_scores
+            self.small_pool = [self.pool[i] for i in sorted(range(len(self.first_scores)), key=lambda k: self.first_scores[k])]
+            self.small_pool = self.small_pool[:int(np.round(self.ref_alpha*self.n_samples))]
             self.u_count += 1
 
         return self.original_dist
