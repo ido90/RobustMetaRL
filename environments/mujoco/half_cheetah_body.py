@@ -19,6 +19,7 @@ class HalfCheetahBodyEnv(HalfCheetahEnv):
         self.eval_mode = eval_mode
         self._max_episode_steps = max_episode_steps
         self.task_dim = 3
+        self.task = None
         super(HalfCheetahBodyEnv, self).__init__()
         self.observation_space = Box(low=-np.inf, high=np.inf, shape=(20,),
                                      dtype=np.float64)
@@ -28,7 +29,6 @@ class HalfCheetahBodyEnv(HalfCheetahEnv):
         # self.original_inertia_vec = self.model.body_inertia.copy()  # 8x3 elements
         self.original_damp_vec = self.model.dof_damping.copy()  # 9 elements
         self.original_len = self.model.geom_size[2, 1].copy()  # 1 element
-        self.task = None
         self.set_task(self.sample_task())
 
         self._time = 0
