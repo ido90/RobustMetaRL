@@ -28,7 +28,7 @@ class HalfCheetahBodyEnv(HalfCheetahEnv):
         # self.original_inertia_vec = self.model.body_inertia.copy()  # 8x3 elements
         self.original_damp_vec = self.model.dof_damping.copy()  # 9 elements
         self.original_len = self.model.geom_size[2, 1].copy()  # 1 element
-
+        self.task = None
         self.set_task(self.sample_task())
 
         self._time = 0
