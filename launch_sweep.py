@@ -59,12 +59,12 @@ class GitOpts(CommandLineOpts):
         # Command for cloning the top of the repository
         # `|| exit 1` will abort the current machine if the git clone has failed
         if opts.clone_url:
-            opts.cmd_clone: str = "git clone {clone_url} --depth={commit_depth} {source_dir} || exit 1"
+            opts.cmd_clone: str = "git clone {clone_url} --depth={commit_depth} {source_dir}"
 
             # Command for checking out the selected commit.
             # NOTE: If checkout fails, we changedir to /tmp in order to break the consequent execution
             opts.cmd_checkout: str = "cd {source_dir}; git remote set-branches origin {branch}; git fetch -v; " \
-                                     "git checkout {commit} || cd /tmp"
+                                     "git checkout {commit}"
         else:
             archive_dir = opts.commit_archive_dir
             assert archive_dir is not None
