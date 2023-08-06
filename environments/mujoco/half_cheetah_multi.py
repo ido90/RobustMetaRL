@@ -85,9 +85,9 @@ class HalfCheetahMultiEnv(HalfCheetahEnv):
     def get_task(self):
         return self.task
 
-    def seed(self, seed):
-        random.seed(seed)
-        np.random.seed(seed)
+    # def seed(self, seed):
+    #     random.seed(seed)
+    #     np.random.seed(seed)
 
     def sample_task(self):
         return np.array([2 ** random.uniform(-0.5, 0.5)

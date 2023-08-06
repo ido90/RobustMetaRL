@@ -87,9 +87,9 @@ class HalfCheetahBodyEnv(HalfCheetahEnv):
         return np.array([2 ** random.uniform(-1, 1)
                          for _ in range(self.task_dim)])
 
-    def seed(self, seed):
-        random.seed(seed)
-        np.random.seed(seed)
+    # def seed(self, seed):
+    #     random.seed(seed)
+    #     np.random.seed(seed)
 
     def sample_tasks(self, n_tasks):
         return [self.sample_task() for _ in range(n_tasks)]
