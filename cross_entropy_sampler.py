@@ -14,6 +14,10 @@ def get_cem_sampler(env_name, seed, oracle=False, alpha=0.05, cem_type=1, naive=
             return CEM_HCV_Oracle(
                 0.5, ref_alpha=alpha, batch_size=8*16,
                 n_orig_per_batch=0.2, soft_update=0.5, title=f'hc_vel_oracle_{sfx}')
+        elif naive:
+            return CEM_Unif(
+                0.5, ref_alpha=alpha, batch_size=8*16,
+                n_orig_per_batch=0.0, soft_update=0.0, title=f'hc_vel_{sfx}')
         else:
             return CEM_Beta(
                 0.5, ref_alpha=alpha, batch_size=8*16,
@@ -23,6 +27,10 @@ def get_cem_sampler(env_name, seed, oracle=False, alpha=0.05, cem_type=1, naive=
             return CEM_HCM_Oracle(
                 0.5, ref_alpha=alpha, batch_size=8*16,
                 n_orig_per_batch=0.2, soft_update=0.5, title=f'hc_mass_oracle_{sfx}')
+        elif naive:
+            return LogUnif1D(
+                0.5, ref_alpha=alpha, batch_size=8*16,
+                n_orig_per_batch=0.0, soft_update=0.0, title=f'hc_mass_{sfx}')
         else:
             return LogBeta1D(
                 0.5, ref_alpha=alpha, batch_size=8*16,
@@ -139,6 +147,47 @@ class CEM_Beta(cem.CEM):
         s = np.array(samples) / self.vmax
         return np.clip(np.mean(w*s)/np.mean(w), self.eps, 1-self.eps)
 
+class CEM_Unif(cem.CEM):
+    '''CEM for 1D Beta distribution.'''
+
+    def __init__(self, *args, vmax=7.0, n_samples=100, **kwargs):
+        super(CEM_Beta, self).__init__(*args, **kwargs)
+        self.default_dist_titles = 'beta_mean'
+        self.default_samp_titles = 'sample'
+        self.vmax = vmax
+        self.n_samples = n_samples
+        self.pool = [self.sample_for_pool(self.original_dist) for _ in range(self.n_samples)]
+        self.small_pool = self.pool
+        self.first_scores = []
+        self.s_count = 0
+        self.u_count = 0
+
+    def sample_for_pool(self, phi):
+        return self.vmax * np.random.uniform()
+
+    def do_sample(self, phi):
+        if self.s_count < self.n_samples:
+            self.s_count += 1
+            return self.pool[self.s_count-1]
+        z = np.random.randint(len(self.pool))
+        return self.pool[z]
+
+    def pdf(self, x, phi):
+        return 1
+
+    def update_sample_distribution(self, samples, weights):
+        if self.u_count < self.n_samples:
+            n = self.n_samples - self.u_count
+            self.first_scores.extend(self.scores[-1][:n])
+            self.u_count += n
+        if self.u_count == self.n_samples:
+            # find the botton k indices of self.first_scores
+            self.small_pool = [self.pool[i] for i in sorted(range(len(self.first_scores)), key=lambda k: self.first_scores[k])]
+            self.small_pool = self.small_pool[:int(np.round(self.ref_alpha*self.n_samples))]
+            self.u_count += 1
+
+        return self.original_dist
+
 class CEM_HCV_Oracle(cem.CEM):
     def __init__(self, *args, vmax=7, **kwargs):
         super().__init__(*args, **kwargs)
@@ -184,6 +233,49 @@ class LogBeta1D(cem.CEM):
         s = np.array(samples)
         s = (np.log2(s) - self.log_range[0]) / (self.log_range[1]-self.log_range[0])
         return np.clip(np.mean(w*s)/np.mean(w), self.eps, 1-self.eps)
+
+class LogUnif1D(cem.CEM):
+    '''x ~ 2**Beta'''
+
+    def __init__(self, *args, log_range=(-1, 1), n_samples=100, **kwargs):
+        super(LogBeta1D, self).__init__(*args, **kwargs)
+        self.default_dist_titles = 'beta_mean'
+        self.default_samp_titles = 'sample'
+        self.log_range = log_range
+        self.n_samples = n_samples
+        self.pool = [self.sample_for_pool(self.original_dist) for _ in range(self.n_samples)]
+        self.small_pool = self.pool
+        self.first_scores = []
+        self.s_count = 0
+        self.u_count = 0
+
+    def sample_for_pool(self, phi):
+        x = np.random.uniform()
+        x = self.log_range[0] + (self.log_range[1]-self.log_range[0]) * x
+        return np.power(2, x)
+
+    def do_sample(self, phi):
+        if self.s_count < self.n_samples:
+            self.s_count += 1
+            return self.pool[self.s_count-1]
+        z = np.random.randint(len(self.pool))
+        return self.pool[z]
+
+    def pdf(self, x, phi):
+        return 1
+
+    def update_sample_distribution(self, samples, weights):
+        if self.u_count < self.n_samples:
+            n = self.n_samples - self.u_count
+            self.first_scores.extend(self.scores[-1][:n])
+            self.u_count += n
+        if self.u_count == self.n_samples:
+            # find the botton k indices of self.first_scores
+            self.small_pool = [self.pool[i] for i in sorted(range(len(self.first_scores)), key=lambda k: self.first_scores[k])]
+            self.small_pool = self.small_pool[:int(np.round(self.ref_alpha*self.n_samples))]
+            self.u_count += 1
+
+        return self.original_dist
 
 class CEM_HCM_Oracle(cem.CEM):
     def __init__(self, *args, log_range=(-1, 1), **kwargs):
