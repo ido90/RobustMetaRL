@@ -30,13 +30,15 @@ class HalfCheetahVelEnv(HalfCheetahEnv):
         self.set_task(self.sample_tasks(1)[0])
         self._max_episode_steps = max_episode_steps
         self.task_dim = 1
-        super(HalfCheetahVelEnv, self).__init__()
-        self.observation_space = Box(low=-np.inf, high=np.inf, shape=(20,),
-                                     dtype=np.float64)
         self._time = 0
         self._return = 0
         self._last_return = 0
         self._curr_rets = []
+        self.task = None
+        super(HalfCheetahVelEnv, self).__init__()
+        self.observation_space = Box(low=-np.inf, high=np.inf, shape=(20,),
+                                     dtype=np.float64)
+
 
     def step(self, action):
         xposbefore = self.sim.data.qpos[0]
