@@ -19,6 +19,11 @@ class HalfCheetahMassEnv(HalfCheetahEnv):
         self.eval_mode = eval_mode
         self._max_episode_steps = max_episode_steps
         self.task_dim = 1
+        self._time = 0
+        self._return = 0
+        self._last_return = 0
+        self._curr_rets = []
+        self.task = None
         super(HalfCheetahMassEnv, self).__init__()
         self.observation_space = Box(low=-np.inf, high=np.inf, shape=(20,),
                                      dtype=np.float64)
@@ -26,10 +31,6 @@ class HalfCheetahMassEnv(HalfCheetahEnv):
         self.original_mass_vec = self.model.body_mass.copy()  # 8 elements
         self.set_task(self.sample_task())
 
-        self._time = 0
-        self._return = 0
-        self._last_return = 0
-        self._curr_rets = []
 
     def step(self, action):
         xposbefore = self.sim.data.qpos[0]
