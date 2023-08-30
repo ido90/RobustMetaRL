@@ -1,13 +1,12 @@
 # Robust Meta Reinforcement Learning (RoML)
 
 The paper [**Train Hard, Fight Easy: Robust Meta Reinforcement Learning**](https://arxiv.org/abs/2301.11147) introduces RoML - a meta-algorithm that takes any meta-learning baseline algorithm and generates a robust version of it.
-This repo implements RoML on top of the [original implementation](https://github.com/lmzintgraf/varibad) of [VariBAD](https://arxiv.org/abs/1910.08348).
-**See [below](#how-to-use-roml-in-your-own-framework---on-top-of-your-own-meta-rl-baseline) how to run RoML in your own favorite algorithmic framework with a few simple steps.**
-Other implementation examples of RoML are on top of [PEARL](https://github.com/ido90/RoML-pearl) and [MAML](https://github.com/ido90/RoML-maml).
+This repo implements RoML on top of the [original implementation](https://github.com/lmzintgraf/varibad) of [VariBAD](https://arxiv.org/abs/1910.08348) (we also provide implementations op top of [PEARL](https://github.com/ido90/RoML-pearl) and [MAML](https://github.com/ido90/RoML-maml)).
+**See [below](#how-to-use-roml-in-your-own-framework---on-top-of-your-own-meta-rl-baseline) how to run RoML in your own favorite algorithmic framework in a few simple steps.**
 
 - [RoML](#what-is-roml)
 - [How to reproduce our experiments](#how-to-reproduce-the-experiments-of-the-paper)
-- [How to use RoML in your own framework](#how-to-use-roml-in-your-own-framework---on-top-of-your-own-meta-rl-baseline)
+- [**How to use RoML in your own framework**](#how-to-use-roml-in-your-own-framework---on-top-of-your-own-meta-rl-baseline)
 
 ## What is RoML
 * **Reinforcement Learning (RL)** aims to learn a policy that makes decisions and maximizes the cumulative rewards (AKA returns) within a given environment.
