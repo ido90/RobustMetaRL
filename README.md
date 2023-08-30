@@ -1,10 +1,15 @@
 # Robust Meta Reinforcement Learning (RoML)
 
-The paper [**Train Hard, Fight Easy: Robust Meta Reinforcement Learning**]() introduces RoML - a meta-algorithm that takes any meta-learning baseline algorithm and generates a robust version of it.
+The paper [**Train Hard, Fight Easy: Robust Meta Reinforcement Learning**](https://arxiv.org/abs/2301.11147) introduces RoML - a meta-algorithm that takes any meta-learning baseline algorithm and generates a robust version of it.
 This repo implements RoML on top of the [original implementation](https://github.com/lmzintgraf/varibad) of [VariBAD](https://arxiv.org/abs/1910.08348).
-See other implementations of RoML on top of [PEARL](https://github.com/ido90/RoML-pearl) and [MAML](https://github.com/ido90/RoML-maml).
+**See [below](#how-to-use-roml-with-another-meta-rl-baseline-(instead-of-varibad)) how to run RoML in your own favorite algorithmic framework with a few simple steps.**
+Other implementation examples of RoML are on top of [PEARL](https://github.com/ido90/RoML-pearl) and [MAML](https://github.com/ido90/RoML-maml).
 
-## What is RoML?
+- [RoML](#what-is-roml)
+- [How to reproduce our experiments](#how-to-reproduce-the-experiments-of-the-paper)
+- [How to use RoML in your own framework](#how-to-use-roml-with-another-meta-rl-baseline--instead-of-varibad)
+
+## What is RoML
 * **Reinforcement Learning (RL)** aims to learn a policy that makes decisions and maximizes the cumulative rewards (AKA returns) within a given environment.
 * **Meta-RL** aims to learn a "meta-policy" that can adapt quickly to new environments (AKA tasks).
 * **Robust Meta RL (RoML)** is a meta-algorithm that takes a meta-RL baseline algorithm, and generates a robust version of this baseline.
@@ -25,7 +30,7 @@ During meta-training, RoML uses the [Cross Entropy Method](http://web.mit.edu/6.
 | :--: |
 | In the bridge environment of [Khazad-Dum](https://tolkiengateway.net/wiki/Bridge_of_Khazad-d%C3%BBm), VariBAD (left) attempts to take the short path through the bridge, but sometimes falls to the abyss. RoML (right) goes around and avoids the falling risk. |
 
-## How to reproduce the experiments of the paper?
+## How to reproduce the experiments of the paper
 
 To train the meta-policies, download this repo and run:
 
@@ -36,10 +41,10 @@ To train the meta-policies, download this repo and run:
 
 To process the results after training, use the module `analysis.py` as demonstrated in the notebooks in this repo (`.ipynb` files).
 
-## How to use RoML with another meta-RL baseline (instead of VariBAD)
+## How to use RoML in your own framework - on top of your own meta-RL baseline
 
-The most convenient way is probably to **use the baseline algorithm implementation** (as we did here with VariBAD), and just **modify the process of task selection** during meta-training.
-This includes:
+RoML can be easily implemented on top of any meta-RL baseline algorithm (instead of VariBAD).
+To run RoML in your own algorithmic framework, just **modify the process of task selection during meta-training**:
 1. Create a CEM sampler before training (e.g., using the [Dynamic CEM package](https://pypi.org/project/cross-entropy-method/)).
 2. When choosing the tasks, use the CEM to do the sampling.
 3. After running the tasks, update the CEM with the resulted returns.
